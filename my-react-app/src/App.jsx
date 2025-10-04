@@ -13,9 +13,7 @@ function App() {
     navigate('/profile');
   };
 
-  const goToMap = () => {
-    navigate('/map');
-  };
+
 
   return (
     <>
@@ -24,7 +22,6 @@ function App() {
           Hello {username}!
         </div>
         <div>
-          <span onClick={goToMap} style={{ cursor: 'pointer', marginRight: '15px', color: 'white' }}>Map</span>
           <img 
             src="/pfp.png" 
             alt="pfp" 

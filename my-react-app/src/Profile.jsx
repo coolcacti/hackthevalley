@@ -41,6 +41,10 @@ function Profile() {
     100
   );
 
+  const goToMap = () => {
+    navigate('/map');
+  };
+
   return (
     <div className="app-container">
       <div className="phone-frame">
@@ -63,6 +67,9 @@ function Profile() {
             alt="Pixel Character"
             className="pixel-character"
           />
+
+        <span onClick={goToMap} className="map-link">🗺️ Map</span>
+
         </div>
 
         <div className="level-container">

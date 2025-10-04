@@ -1,6 +1,7 @@
 import React from "react";
 import "./Map.css";
 import "leaflet/dist/leaflet.css";
+import { useNavigate } from "react-router-dom";  // Add this import
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 // 1. Import L from Leaflet
 import L from "leaflet";
@@ -18,9 +19,16 @@ const redIcon = new L.Icon({
 });
 
 function Map() {
+  const navigate = useNavigate();
   return (
     <div className="map-container">
-      <h1>Map Page</h1>
+
+       <button 
+        className="back-button2"
+        onClick={() => navigate('/profile')}
+      >
+        &#60; Back
+      </button>
 
       <MapContainer
         center={[43.788991157897776, -79.19059949394783]}
