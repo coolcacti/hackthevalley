@@ -7,6 +7,7 @@ import App from "./App.jsx";
 import Profile from "./Profile.jsx";
 import LoginPage from "./LoginPage.jsx";
 import Map from "./Map.jsx";
+import TrashRecorder from "./camera.jsx"; // Add this import
 import "./index.css";
 
 // 🔹 Handles routing and protects routes
@@ -30,6 +31,10 @@ function RootRoutes() {
       <Route
         path="/map"
         element={isAuthenticated ? <Map /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/camera"
+        element={isAuthenticated ? <TrashRecorder /> : <Navigate to="/login" replace />}
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
