@@ -13,6 +13,10 @@ function App() {
     navigate('/profile');
   };
 
+  const goToCamera = () => {
+    navigate('/camera');
+  };
+
   return (
     <div className="main-container">
       <nav className="navbar">
@@ -40,7 +44,7 @@ function App() {
         </div>
       </div>
 
-      <button className="scan-button"> 📸‎ ‎ Submit Item</button>
+      <button className="scan-button" onClick={goToCamera}> 📸‎ ‎ Submit Item</button>
 
       <div className="leaderboard">
         <div className="leaderboard-header">
