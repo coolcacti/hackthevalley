@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import './profile.css';
 
 
 function App() {
+
+  const navigate = useNavigate();
+
   const avatarOptions = [
     '/avatar1.jpeg',
     '/avatar2.jpeg',
@@ -40,7 +44,7 @@ function App() {
   };
 
   const handleBack = () => {
-    alert('Back button clicked!');
+    navigate('/');  // This will redirect to the home page
   };
 
   const maxTrash = 200; // max for level bar
