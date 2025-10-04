@@ -9,7 +9,6 @@ function App() {
   // Get the custom username claim from Auth0
   const username = user?.['https://myapp.example.com/username'] || 'User';
 
-
   const goToProfile = () => {
     navigate('/profile');
   };
