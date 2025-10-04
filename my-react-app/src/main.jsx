@@ -6,6 +6,7 @@ import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import App from "./App.jsx";
 import Profile from "./Profile.jsx";
 import LoginPage from "./LoginPage.jsx";
+import Map from "./Map.jsx";
 import "./index.css";
 
 // 🔹 Handles routing and protects routes
@@ -25,6 +26,10 @@ function RootRoutes() {
       <Route
         path="/profile"
         element={isAuthenticated ? <Profile /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/map"
+        element={isAuthenticated ? <Map /> : <Navigate to="/login" replace />}
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
