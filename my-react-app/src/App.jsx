@@ -13,8 +13,6 @@ function App() {
     navigate('/profile');
   };
 
-
-
   return (
     <>
       <nav className="navbar">

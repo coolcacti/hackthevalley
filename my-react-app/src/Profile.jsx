@@ -68,7 +68,7 @@ function Profile() {
             className="pixel-character"
           />
 
-        <span onClick={goToMap} className="map-link">🗺️ Map</span>
+          <span onClick={goToMap} className="map-link">🗺️ Map</span>
 
         </div>
 
@@ -107,7 +107,15 @@ function Profile() {
               <div className="bar-fill trash" style={{ width: "20%" }}></div>
             </div>
           </div>
+
         </div>
+        <span
+          className="map-link"
+          onClick={() => logout({ returnTo: window.location.origin })}
+          style={{ margin: '20px auto', display: 'block' }}
+        >
+          Log Out
+        </span>
       </div>
     </div>
   );

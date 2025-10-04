@@ -1,16 +1,15 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import './Login.css';
 
 export default function LoginPage() {
-  const { loginWithPopup, logout, isAuthenticated, user, isLoading } = useAuth0();
+  const { loginWithRedirect, logout, isAuthenticated, user, isLoading } = useAuth0();
   const navigate = useNavigate();
 
   if (isLoading) return <div>Loading...</div>;
 
   const handleLogin = async () => {
-    await loginWithPopup(); // opens Auth0 popup
-    navigate("/app");       // redirect after login
+    await loginWithRedirect();
   };
 
   return (
@@ -22,12 +21,7 @@ export default function LoginPage() {
           <button className="login-button" onClick={handleLogin}>Log In</button>
         </div>
       ) : (
-        <div>
-          <p>Welcome, {user?.name || 'User'}!</p>
-          <button onClick={() => logout({ returnTo: window.location.origin })}>
-            Log Out
-          </button>
-        </div>
+        <Navigate to="/app" replace />
       )}
     </div>
   );
