@@ -21,12 +21,8 @@ const redIcon = new L.Icon({
 function Map() {
   const navigate = useNavigate();
   return (
-    <div className="map-container">
-
-       <button 
-        className="back-button2"
-        onClick={() => navigate('/profile')}
-      >
+    <div className="full-map-container">
+      <button className="back-button2" onClick={() => navigate('/profile')}>
         &#60; Back
       </button>
 
@@ -34,6 +30,7 @@ function Map() {
         center={[43.788991157897776, -79.19059949394783]}
         zoom={13}
         scrollWheelZoom={false}
+        style={{ width: '100%', height: '100%' }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -41,7 +38,6 @@ function Map() {
         />
         <Marker
           position={[43.78754535704544, -79.19009374471229]}
-          // 3. Pass the custom icon to the Marker
           icon={redIcon}
         >
           <Popup>You collected a trash item here!</Popup>
