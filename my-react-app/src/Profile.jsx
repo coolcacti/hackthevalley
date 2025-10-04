@@ -54,7 +54,7 @@ function App() {
     <div className="app-container">
       <div className="phone-frame">
         <button className="back-button" onClick={handleBack}>
-          ← Back
+          &#60; Back
         </button>
 
         {/* Top-right profile */}

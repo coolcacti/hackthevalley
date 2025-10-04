@@ -19,9 +19,6 @@ body {
   padding: 45px;
 }
 
-.navbar:hover {
-  background: rgba(113, 229, 113, 0.95);
-}
 
 .nav-text {
   font-size: 40px;
