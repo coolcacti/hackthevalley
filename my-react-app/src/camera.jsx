@@ -12,7 +12,7 @@ export default function TrashRecorder() {
   const modelRef = useRef(null);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [user, setUser] = useState({ name: "Samuel", avatar: "https://i.pravatar.cc/40" }); // dummy avatar
+  const [user, setUser] = useState({ name: "Samuel", avatar: "https://i.pravatar.cc/40" });
 
   const [isRecording, setIsRecording] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -40,14 +40,31 @@ export default function TrashRecorder() {
   };
 
   const labelToCategory = (label) => {
-    const l = label.toLowerCase();
+    const l = label.toLowerCase().trim();
+    
+    // Exclude people/humans - check this FIRST
+    if (l.includes("person") || l.includes("people") || l.includes("human") || l.includes("man") || l.includes("woman") || l.includes("child")) {
+      return "person";
+    }
+    
+    // Check exact matches in categoryMap
     if (categoryMap[l]) return categoryMap[l];
-    if (l.includes("bottle") || l.includes("cup") || l.includes("can") || l.includes("glass")) return "Recyclable";
-    if (["banana", "apple", "orange", "sandwich", "hotdog"].some(x => l.includes(x))) return "Compost";
+    
+    // Check recyclables
+    if (l.includes("bottle") || l.includes("cup") || l.includes("can") || l.includes("glass")) {
+      return "Recyclable";
+    }
+    
+    // Check compost
+    if (["banana", "apple", "orange", "sandwich", "hotdog"].some(x => l.includes(x))) {
+      return "Compost";
+    }
+    
+    // Default to Trash
     return "Trash";
   };
 
-  // Initialize camera
+  // Camera init
   useEffect(() => {
     let mounted = true;
     const initCamera = async () => {
@@ -68,7 +85,7 @@ export default function TrashRecorder() {
     initCamera();
     return () => {
       mounted = false;
-      if (videoRef.current && videoRef.current.srcObject) {
+      if (videoRef.current?.srcObject) {
         videoRef.current.srcObject.getTracks().forEach(t => t.stop());
       }
     };
@@ -190,24 +207,24 @@ export default function TrashRecorder() {
     setStatus("ready");
   };
 
+  // Integrated sendRecording function
   const sendRecording = async () => {
-    if (!recorderRef.current || !recorderRef.current.recordedBlob) {
-      alert("No recording available. Record first.");
-      return;
-    }
-    setStatus("sending");
+    if (!recorderRef.current || !recorderRef.current.recordedBlob) return alert("No recording available.");
+
     const form = new FormData();
     form.append("video", recorderRef.current.recordedBlob, "recording.webm");
     form.append("summary", JSON.stringify({ summary, lastDetectedObjects }));
 
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const res = await fetch("http://localhost:5000/api/upload", { method: "POST", body: form });
       if (!res.ok) throw new Error("Upload failed");
-      setStatus("sent");
+      const data = await res.json();
+      console.log("Server response:", data);
       alert("Video sent successfully!");
+      setStatus("sent");
     } catch (err) {
       console.error(err);
-      alert("Failed to send video (check console).");
+      alert("Upload failed");
       setStatus("ready-to-send");
     }
   };
@@ -215,36 +232,30 @@ export default function TrashRecorder() {
   return (
     <div className="app-phone-root">
       <div className="phone-frame">
-
         <div className="top-bar">
-  <button className="btn back" onClick={() => alert("Back")}>←</button>
-
-  {/* App Heading */}
-  <div className="app-heading">AI Voice Notes</div>
-
-  <div style={{ position: "relative" }}>
-    <img
-      src={user.avatar}
-      className="avatar-thumb"
-      onClick={() => setDropdownOpen(!dropdownOpen)}
-      alt="Avatar"
-    />
-    {dropdownOpen && (
-      <div className="avatar-menu">
-        <div>Hello, {user.name}</div>
-        <button onClick={() => alert("Profile")}>Profile</button>
-        <button onClick={() => alert("Logout")}>Logout</button>
-      </div>
-    )}
-  </div>
-</div>
-
+          <button className="btn back" onClick={() => alert("Back")}>←</button>
+          <div className="app-heading">AI Voice Notes</div>
+          <div style={{ position: "relative" }}>
+            <img
+              src={user.avatar}
+              className="avatar-thumb"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              alt="Avatar"
+            />
+            {dropdownOpen && (
+              <div className="avatar-menu">
+                <div>Hello, {user.name}</div>
+                <button onClick={() => alert("Profile")}>Profile</button>
+                <button onClick={() => alert("Logout")}>Logout</button>
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="camera-area">
           <video ref={videoRef} className="camera-video" playsInline muted />
           <canvas ref={canvasRef} className="camera-canvas" />
         </div>
-
 
         <div className="info-panel">
           <div className="summary">
@@ -260,14 +271,10 @@ export default function TrashRecorder() {
           ) : (
             <button className="stop-btn" onClick={stopRecording}>■ STOP</button>
           )}
-
           {status === "ready-to-send" && (
             <button className="send-btn" onClick={sendRecording}>📤 SEND</button>
           )}
         </div>
-
-
-        
       </div>
     </div>
   );

@@ -92,6 +92,13 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
   justify-content: center;
   margin: 12px 12px 0;
 }
+
+.gif-container {
+  float: right;
+  margin: 1rem;
+  width: 120px; /* adjust size as needed */
+}
+
 .record-btn, .stop-btn, .send-btn {
   border: none;
   padding: 10px 14px;
