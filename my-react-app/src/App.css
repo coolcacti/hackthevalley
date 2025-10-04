@@ -20,15 +20,16 @@ body {
 }
 
 
+
 .nav-text {
   font-size: 40px;
   font-weight: bold;
-  color: #6b8e23;
+  color: #719034;
 }
 
 .nav-avatar {
-  width: 80px;
-  height: 80px;
+  width:60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -53,7 +54,7 @@ body {
   border-radius: 15px;
   height: 140px;
   box-sizing: border-box;
-  background-color: #6b8e23;
+  background: linear-gradient(to bottom right, #6fab61, #a6ba58);
 }
 
 .info-box2 {
@@ -72,7 +73,7 @@ body {
 .info-title {
   font-weight: bold;
   margin: 0;
-  color: rgb(185, 228, 164);
+  color: rgb(222, 238, 194);
   padding-left: 7px;
 }
 
@@ -90,7 +91,7 @@ body {
 }
 
 .scan-button {
-  background-color: #6b8e23;
+  background: linear-gradient(to bottom right, #a6ba58, #6fab61);
   color: white;
   border: none;
   padding: 30px 30px;
@@ -116,15 +117,15 @@ body {
 }
 
 .leaderboard-header {
-  background-color: #8bc88b;
+  background: linear-gradient(to bottom right, #a6ba58, #6fab61);
   padding: 20px;
-  border-bottom: 2px solid #6b8e23;
+  border-bottom: 3px solid #6b8e23;
 }
 
 .leaderboard-title {
   font-size: 28px;
   font-weight: bold;
-  color: #4a6b2a;
+  color: #ffffff;
   margin: 0;
 }
 
@@ -133,7 +134,8 @@ body {
   align-items: center;
   gap: 15px;
   padding: 15px 20px;
-  border-bottom: 2px solid #6b8e23;
+  background: #b8dd8f;
+  border-bottom: 3px solid #6b8e23;
 }
 
 .leaderboard-item:last-child {
@@ -155,7 +157,8 @@ body {
 }
 
 .footer {
-  color: rgb(47, 58, 42);
+  color: rgb(77, 120, 58);
+  font-weight: 500;
   text-align: center;
   padding: 20px;
   font-size: 16px;

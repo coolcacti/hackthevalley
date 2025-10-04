@@ -1,54 +1,45 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import './profile.css';
+// src/profile.jsx
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import "./profile.css";
 
-
-function App() {
-
+function Profile() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth0();
 
-  const avatarOptions = [
-    '/avatar1.jpeg',
-    '/avatar2.jpeg',
-    '/avatar3.jpeg',
-  ];
+  // Get the custom username from Auth0 Action
+  const username = user?.["https://myapp.example.com/username"] || "User";
 
-  const [user, setUser] = useState({
-    name: 'Samuel',
-    avatar: '/avatar1.jpeg',
-    trashCollected: 128, // Used for level
+  const avatarOptions = ["/avatar1.jpeg", "/avatar2.jpeg", "/avatar3.jpeg"];
+
+  // Local state for profile-specific data
+  const [profileUser, setProfileUser] = useState({
+    name: username,
+    avatar: "/avatar1.jpeg",
+    trashCollected: 128,
   });
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentFrame, setCurrentFrame] = useState(0);
-
-  const pixelFrames = [
-    '/pixel1.png',
-    '/pixel2.png',
-    '/pixel3.png',
-  ];
+  const pixelFrames = ["/pixel1.png", "/pixel2.png", "/pixel3.png"];
 
   // Pixel animation loop
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentFrame(prev => (prev + 1) % pixelFrames.length);
+      setCurrentFrame((prev) => (prev + 1) % pixelFrames.length);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleAvatarClick = () => setDropdownOpen(!dropdownOpen);
-
-  const handleAvatarChange = (newAvatar) => {
-    setUser({ ...user, avatar: newAvatar });
-    setDropdownOpen(false);
-  };
-
   const handleBack = () => {
-    navigate('/');  // This will redirect to the home page
+    navigate("/app"); // redirect to home
   };
 
-  const maxTrash = 200; // max for level bar
-  const levelPercentage = Math.min((user.trashCollected / maxTrash) * 100, 100);
+  const maxTrash = 200;
+  const levelPercentage = Math.min(
+    (profileUser.trashCollected / maxTrash) * 100,
+    100
+  );
 
   return (
     <div className="app-container">
@@ -57,80 +48,62 @@ function App() {
           &#60; Back
         </button>
 
-        {/* Top-right profile */}
         <div className="top-right-avatar">
           <img
-            src={user.avatar}
+            src={profileUser.avatar}
             alt="Profile"
             className="profile-avatar"
-            onClick={handleAvatarClick}
           />
-          {dropdownOpen && (
-            <div className="avatar-dropdown">
-              {avatarOptions.map((img, i) => (
-                <img
-                  key={i}
-                  src={img}
-                  alt="avatar option"
-                  className="avatar-option"
-                  onClick={() => handleAvatarChange(img)}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Pixel character */}
         <div className="character-container">
+          <div className="character-name">{profileUser.name}</div>
           <img
             src={pixelFrames[currentFrame]}
             alt="Pixel Character"
             className="pixel-character"
           />
-
-          <div className="character-name">Samuel</div>
         </div>
-        
 
-        {/* Level bar */}
         <div className="level-container">
-          <p className="level-text">Level Progress: 1</p>
+          <p className="level-text">Level 1</p>
           <div className="level-bar">
             <div
               className="level-fill"
               style={{ width: `${levelPercentage}%` }}
             ></div>
           </div>
-          <p className="level-value">{user.trashCollected} / {maxTrash} kg</p>
+          <p className="level-value">
+            {profileUser.trashCollected} / {maxTrash} kg
+          </p>
         </div>
 
         <div className="widget-container">
-        <h3 className="widget-title">Distribution of Trash</h3>
-        <div className="widget-bar">
-          <span>Compost</span>
-          <div className="bar-background">
-            <div className="bar-fill compost" style={{ width: '50%' }}></div>
+          <h3 className="widget-title">Distribution of Trash</h3>
+          <div className="widget-bar">
+            <span>Compost</span>
+            <div className="bar-background">
+              <div className="bar-fill compost" style={{ width: "50%" }}></div>
+            </div>
+          </div>
+
+          <div className="widget-bar">
+            <span>Recycle</span>
+            <div className="bar-background">
+              <div className="bar-fill recycle" style={{ width: "30%" }}></div>
+            </div>
+          </div>
+
+          <div className="widget-bar">
+            <span>Trash</span>
+            <div className="bar-background">
+              <div className="bar-fill trash" style={{ width: "20%" }}></div>
+            </div>
           </div>
         </div>
-
-        <div className="widget-bar">
-          <span>Recycle</span>
-          <div className="bar-background">
-            <div className="bar-fill recycle" style={{ width: '30%' }}></div>
-          </div>
-        </div>
-
-        <div className="widget-bar">
-          <span>Trash</span>
-          <div className="bar-background">
-            <div className="bar-fill trash" style={{ width: '20%' }}></div>
-          </div>
-        </div>
-      </div>
-
       </div>
     </div>
   );
 }
 
-export default App;
+export default Profile;
