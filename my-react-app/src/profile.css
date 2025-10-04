@@ -1,5 +1,6 @@
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial,
+    sans-serif;
   margin: 0;
   background: linear-gradient(135deg, #eafaf1 0%, #d4f0e0 100%);
   color: #2e5d34;
@@ -27,9 +28,9 @@ body {
 /* Back Button */
 .back-button {
   position: absolute;
-  top: 20px;
+  top: 25px;
   left: 20px;
-  color: rgb(48, 81, 56);
+  color: #719034;
   font-weight: bold;
   font-size: 25px;
   background-color: transparent;
@@ -39,21 +40,20 @@ body {
   transition: 0.3s;
 }
 
-
-
-
-/* Top-right avatar */
 .top-right-avatar {
   position: absolute;
   top: 20px;
   right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .profile-avatar {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: 3px solid #4e8f41;
   cursor: pointer;
 }
 
@@ -97,15 +97,22 @@ body {
   height: 300px;
   object-fit: contain;
   animation: bounce 1.5s infinite ease-in-out;
+  margin-bottom: -20px;
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .character-name {
   margin-top: 8px;
+  margin-bottom: 15px;
   font-size: 16px;
   font-weight: 600;
   color: #2e5d34;
