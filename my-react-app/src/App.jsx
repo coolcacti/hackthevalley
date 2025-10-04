@@ -6,8 +6,8 @@ function App() {
   const navigate = useNavigate();
   const { user, logout } = useAuth0();
 
-  // Get the custom username claim from Auth0
-  const username = user?.['https://myapp.example.com/username'] || 'User';
+  const fullName = user?.name || 'User';
+  const firstName = fullName.split(' ')[0];
 
   const goToProfile = () => {
     navigate('/profile');
@@ -17,7 +17,7 @@ function App() {
     <>
       <nav className="navbar">
         <div className="nav-text">
-          Hello {username}!
+          Hello {firstName}!
         </div>
         <div>
           <img 
