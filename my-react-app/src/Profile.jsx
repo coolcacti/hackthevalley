@@ -119,7 +119,7 @@ function Profile() {
           className="map-preview-container"
           style={{
             width: '100%',
-            maxWidth: '400px',
+            maxWidth: '500px',
             margin: '20px auto',
             borderRadius: '16px',
             overflow: 'hidden',

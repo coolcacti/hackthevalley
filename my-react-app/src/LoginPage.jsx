@@ -6,7 +6,7 @@ export default function LoginPage() {
   const { loginWithRedirect, logout, isAuthenticated, user, isLoading } = useAuth0();
   const navigate = useNavigate();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div className='loading-text'>Loading...</div>;
 
   const handleLogin = async () => {
     await loginWithRedirect();

@@ -13,7 +13,7 @@ import "./index.css";
 function RootRoutes() {
   const { isAuthenticated, isLoading } = useAuth0();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div className="loading-text">Loading...</div>;
 
   return (
     <Routes>
