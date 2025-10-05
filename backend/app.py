@@ -33,9 +33,11 @@ else:
     client = genai.Client(api_key=GEMINI_API_KEY)
 
 # System prompt for Gemini
-SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throwing away trash. Your goal is to determine how many items of each trash type (compost, recyclable, trash) were successfully thrown into the bin.
+SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throwing away trash. Your task is to count how many items of each trash type (compost, recyclable, trash) are successfully thrown into the bin.
 
-Return your analysis strictly in JSON format only, with no extra commentary or explanation.
+Only count an item if it clearly lands inside the bin. Do not count items that are dropped, missed, or only held by the user.
+
+Return your analysis strictly in JSON format only, with no extra commentary or text.
 
 Output format:
 {
@@ -45,12 +47,14 @@ Output format:
 }
 
 Guidelines:
-- Count only items that clearly land inside the bin as "successful".
 - Classify each item into one of three categories:
   - "compost" for food waste or organic materials
   - "recyclable" for plastics, metals, cardboard, or glass
   - "trash" for general non-recyclable waste
-- Only output valid JSON with the structure above. No markdown, no text, and no nesting.
+- Only count items that are visibly thrown into and land inside the bin.
+- Items that remain in the user’s hand, miss the bin, or are unclear should not be counted.
+- Output must be valid JSON with the exact keys and structure shown above.
+
 """
 
 
