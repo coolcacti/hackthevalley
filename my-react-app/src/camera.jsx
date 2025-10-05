@@ -272,7 +272,7 @@ export default function TrashRecorder() {
 
     try {
       setStatus("sending");
-      const res = await fetch("http://localhost:5000/api/upload", { method: "POST", body: form });
+      const res = await fetch("http://localhost:5001/api/upload", { method: "POST", body: form });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
       console.log("Server response:", data);

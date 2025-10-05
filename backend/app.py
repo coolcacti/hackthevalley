@@ -4,7 +4,9 @@ import time
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-import google.generativeai as genai
+# import google.generativeai as genai
+import google.genai as genai
+from google.genai import types
 from pathlib import Path
 
 app = Flask(__name__)
@@ -27,7 +29,8 @@ if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not found in environment variables!")
     print("Set it with: export GEMINI_API_KEY='your-api-key-here'")
 else:
-    genai.configure(api_key=GEMINI_API_KEY)
+    # genai.configure(api_key=GEMINI_API_KEY)
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
 # System prompt for Gemini
 SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throwing trash. Your task is to determine if the trash was successfully thrown into the garbage bin. If yes, return "yes"; if not, return "no". Also, classify the trash as one of: "compost", "recyclable", or "trash". Only return the output in JSON format: { "thrown_in_bin": "yes" | "no", "trash_type": "compost" | "recyclable" | "trash" }. Use visual cues from the video to decide if the trash lands in the bin, and classify common household waste correctly. Do not include any extra commentary."""
@@ -36,97 +39,74 @@ SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throw
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-def analyze_video_with_gemini(video_path):
+def analyze_video_with_gemini(video_path, timeout_s=120, poll_interval=2):
     """
-    Analyze video using Gemini API
-    Returns parsed JSON response
+    Upload video, wait until Gemini processing completes (ACTIVE), then call generate_content
+    using the file object and a text prompt. Returns dict (parsed JSON) or error dict.
     """
     try:
         print(f"Starting video analysis for: {video_path}")
-        
-        # Initialize Gemini model
-        model = genai.GenerativeModel('models/gemini-2.0-flash')
-        print(f"Using model: gemini-2.0-flash")
-        
-        # Upload file using the correct API
+        client = genai.Client(api_key=GEMINI_API_KEY)
+
+        # Upload (use keyword 'file' as shown in official examples)
         print("Uploading video to Gemini...")
-        video_file = genai.upload_file(path=video_path)
-        print(f"Upload complete. File name: {video_file.name}")
-        
-        # Wait for file to be processed
-        print("Waiting for video processing...")
-        while video_file.state.name == "PROCESSING":
-            print("  Still processing...")
-            time.sleep(5)
-            video_file = genai.get_file(video_file.name)
-        
-        if video_file.state.name == "FAILED":
-            raise Exception("Video processing failed on Gemini servers")
-        
-        print("Video processed successfully. Generating analysis...")
-        
-        # Generate content with video and prompt
-        response = model.generate_content(
-            [video_file, SYSTEM_PROMPT],
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.1,
-            )
+        video_file = client.files.upload(file=Path(video_path))
+        print(f"Upload complete. File name/ID: {video_file.name}")
+        print(f"Initial file state: {getattr(video_file, 'state', None)}")
+
+        # Poll until the file is processed and becomes ACTIVE (or timeout)
+        start = time.time()
+        while not getattr(video_file, "state", None) or video_file.state.name != "ACTIVE":
+            if time.time() - start > timeout_s:
+                raise TimeoutError(f"Timed out waiting for file to become ACTIVE (after {timeout_s}s). Last state={getattr(video_file,'state',None)}")
+            print("Processing video on Gemini servers... current state:", getattr(video_file, "state", None))
+            time.sleep(poll_interval)
+            # IMPORTANT: call with keyword 'name'
+            video_file = client.files.get(name=video_file.name)
+
+        print("File processing finished, state=ACTIVE. Calling generate_content...")
+
+        # Use the file object directly plus your system prompt (do NOT pass ad-hoc dicts)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[video_file, SYSTEM_PROMPT]
         )
-        
-        # Get response text
+
         response_text = response.text.strip()
         print(f"Raw Gemini response:\n{response_text}\n")
-        
-        # Clean up response text (remove markdown if present)
+
+        # Same parsing logic you already have:
         if "```json" in response_text:
             response_text = response_text.split("```json")[1].split("```")[0].strip()
         elif "```" in response_text:
             response_text = response_text.split("```")[1].split("```")[0].strip()
-        
-        # Parse JSON response
+
         try:
             result = json.loads(response_text)
         except json.JSONDecodeError:
-            # If direct parsing fails, try to find JSON in the text
             import re
             json_match = re.search(r'\{[^}]+\}', response_text)
             if json_match:
                 result = json.loads(json_match.group())
             else:
                 raise ValueError(f"Could not parse JSON from response: {response_text}")
-        
-        # Validate response structure
-        if "thrown_in_bin" not in result or "trash_type" not in result:
-            print(f"Warning: Invalid response structure: {result}")
-            # Provide default structure
-            result = {
-                "thrown_in_bin": result.get("thrown_in_bin", "no"),
-                "trash_type": result.get("trash_type", "trash"),
-                "raw_response": response_text
-            }
-        
+
         print(f"Parsed result: {result}")
-        
-        # Clean up uploaded file
+
+        # Optional: cleanup the uploaded file (use `name=`)
         try:
-            genai.delete_file(video_file.name)
-            print("Cleaned up temporary file from Gemini")
+            client.files.delete(name=video_file.name)
+            print("Cleaned up temporary file from Gemini (deleted).")
         except Exception as cleanup_error:
             print(f"Warning: Could not cleanup file: {cleanup_error}")
-        
+
         return result
-        
+
     except Exception as e:
-        print(f"ERROR in analyze_video_with_gemini: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {
-            "error": str(e),
-            "error_type": type(e).__name__
-        }
-
-
+        return {"error": str(e), "error_type": type(e).__name__}
+    
 def save_analysis_result(filename, gemini_result, metadata):
     """
     Save analysis result with location data to a JSON file
@@ -333,12 +313,15 @@ if __name__ == '__main__':
     # List available models
     if GEMINI_API_KEY:
         try:
-            print("\nAvailable Gemini models:")
-            for model in genai.list_models():
-                if 'generateContent' in model.supported_generation_methods:
-                    print(f"  - {model.name}")
+            print("\nAvailable Gemini models (that support generateContent):")
+            client = genai.Client(api_key=GEMINI_API_KEY)
+            for m in client.models.list():
+                # check supported actions/fields (docs show supported_actions or supported_generation_methods)
+                if "generateContent" in getattr(m, "supported_actions", [] ) or "generateContent" in getattr(m, "supported_generation_methods", []):
+                    print(f"  - {m.name}")
         except Exception as e:
             print(f"Could not list models: {e}")
+
     
     print("="*50)
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=5001, debug=True)

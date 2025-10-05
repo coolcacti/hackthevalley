@@ -11,7 +11,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const app = express();
-const PORT = 5000;
+const PORT = 5001;
 
 // Enable CORS
 app.use(cors());
