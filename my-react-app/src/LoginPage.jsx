@@ -17,8 +17,8 @@ export default function LoginPage() {
       {!isAuthenticated ? (
         <div className="login-container">
           <h1 className="welcome-text">Welcome To</h1>
-          <h1 className="welcome-text">Dump It</h1>
-          <h1 className="welcome-text">Like It's Hot!</h1>
+          <h1 className="welcome-text"><span style={{ color: "rgba(57, 149, 47, 1)" }}>Dump It</span></h1>
+          <h1 className="welcome-text"><span style={{ color: "rgba(57, 149, 47, 1)" }}>Like It's Hot!</span></h1>
           <button className="login-button" onClick={handleLogin}>Log In</button>
         </div>
       ) : (

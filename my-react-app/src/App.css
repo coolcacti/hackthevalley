@@ -17,10 +17,11 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 45px 20px;
+  padding-top: 35px;
 }
 
 .nav-text {
-  font-size: 40px;
+  font-size: 35px;
   font-weight: bold;
   color: #719034;
 }

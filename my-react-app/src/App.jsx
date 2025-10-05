@@ -33,7 +33,7 @@ function App() {
       <SyncUser />
       <nav className="navbar">
         <div className="nav-text">
-          Hello {firstName}!
+          Hey {firstName}!
         </div>
         <div>
           <img 

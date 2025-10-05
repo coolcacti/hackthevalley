@@ -105,7 +105,7 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
 
 /* info panel */
 .app-heading {
-  font-size: 1.2rem;
+  font-size: 25px;
   font-weight: bold;
   flex-grow: 1;
   display: flex;
@@ -251,4 +251,19 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
 
 .avatar-menu div:hover {
   background: rgba(0,0,0,0.05);
+}
+
+.success-text {
+  display: flex;   
+  flex-direction: column;            /* make it a flex container */
+  align-items: center;         /* vertical centering */
+  justify-content: center;     /* horizontal centering */
+  width: 100%;
+  height: 100vh;               /* full viewport height */
+  color: rgb(46, 93, 46);
+  font-weight: 700;
+  font-size: 40px;
+  text-align: center;
+  padding-left: 10px;
+  padding-right: 10px;
 }
