@@ -41,9 +41,9 @@ function RootRoutes() {
   );
 }
 
-// 🔹 Auth0 credentials
 const domain = "dev-kipzv7bwrxcpd61d.us.auth0.com";
 const clientId = "Hcsgl2jxlvR7LbvDHyyGU4Wpw6758UJx";
+const audience = "https://dev-kipzv7bwrxcpd61d.us.auth0.com/api/v2/";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -51,7 +51,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <Auth0Provider
         domain={domain}
         clientId={clientId}
-        authorizationParams={{ redirect_uri: window.location.origin + "/app" }}
+        authorizationParams={{
+          redirect_uri: window.location.origin + "/app",
+          audience: "https://dev-kipzv7bwrxcpd61d.us.auth0.com/api/v2/",
+          scope: "openid profile email"
+        }}
       >
         <RootRoutes />
       </Auth0Provider>

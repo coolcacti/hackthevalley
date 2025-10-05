@@ -1,7 +1,7 @@
 import express from 'express';
-import jwt from 'express-jwt';
+import { expressjwt as jwt } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
-import Submission from '../models/submission.js';
+import Submission from './submission.js';
 
 const router = express.Router();
 

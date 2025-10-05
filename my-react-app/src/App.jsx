@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import './App.css';
+import SyncUser from './components/SyncUser';
 
 function App() {
   const navigate = useNavigate();
   const { user, logout } = useAuth0();
 
-  // Get the custom username claim from Auth0
   const fullName = user?.name || 'User';
   const firstName = fullName.split(' ')[0];
 
@@ -20,6 +20,7 @@ function App() {
 
   return (
     <div className='main-container'>
+      <SyncUser />
       <nav className="navbar">
         <div className="nav-text">
           Hello {firstName}!
