@@ -22,7 +22,6 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Configure Gemini API
-# Make sure to set your API key as an environment variable
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not found in environment variables!")
@@ -46,8 +45,7 @@ def analyze_video_with_gemini(video_path):
     try:
         print(f"Starting video analysis for: {video_path}")
         
-        # Initialize Gemini model with the correct format
-        # Use the full model path that works with video
+        # Initialize Gemini model
         model = genai.GenerativeModel('models/gemini-2.0-flash')
         print(f"Using model: gemini-2.0-flash")
         
@@ -129,67 +127,37 @@ def analyze_video_with_gemini(video_path):
         }
 
 
-def analyze_video_alternative(video_path):
+def save_analysis_result(filename, gemini_result, metadata):
     """
-    Alternative method using direct file upload
+    Save analysis result with location data to a JSON file
     """
-    try:
-        import google.generativeai.types.file_types as file_types
-        
-        model = genai.GenerativeModel('gemini-2.0-flash')
-        
-        print(f"Using alternative upload method for: {video_path}")
-        
-        # Try using the Files API directly
-        file = genai.File.create(
-            path=video_path,
-            display_name=os.path.basename(video_path)
-        )
-        
-        print(f"File uploaded with URI: {file.uri}")
-        
-        # Wait for processing
-        while file.state.name == "PROCESSING":
-            print("Processing video...")
-            time.sleep(3)
-            file = genai.File.get(file.name)
-        
-        if file.state.name == "FAILED":
-            raise Exception("Video processing failed")
-        
-        # Generate content
-        response = model.generate_content([SYSTEM_PROMPT, file])
-        
-        response_text = response.text.strip()
-        print(f"Raw response: {response_text}")
-        
-        # Parse JSON
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0].strip()
-        
-        result = json.loads(response_text)
-        
-        # Cleanup
-        try:
-            file.delete()
-        except:
-            pass
-        
-        return result
-        
-    except Exception as e:
-        print(f"Alternative method also failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return {"error": f"All upload methods failed: {str(e)}"}
+    results_folder = os.path.join(UPLOAD_FOLDER, 'results')
+    os.makedirs(results_folder, exist_ok=True)
+    
+    # Create result filename (same as video but with .json extension)
+    result_filename = os.path.splitext(filename)[0] + '_result.json'
+    result_path = os.path.join(results_folder, result_filename)
+    
+    # Combine all data
+    full_result = {
+        'video_filename': filename,
+        'timestamp': time.time(),
+        'gemini_analysis': gemini_result,
+        'metadata': metadata
+    }
+    
+    # Save to JSON file
+    with open(result_path, 'w') as f:
+        json.dump(full_result, f, indent=2)
+    
+    print(f"Analysis result saved to: {result_path}")
+    return result_path
 
 
 @app.route('/api/upload', methods=['POST'])
 def upload_video():
     """
-    Handle video upload and analysis
+    Handle video upload and analysis with location data
     """
     try:
         # Check if video file is present
@@ -213,20 +181,39 @@ def upload_video():
         
         print(f"Video saved to: {filepath}")
         
-        # Get summary from frontend (optional metadata)
-        summary_data = request.form.get('summary')
-        if summary_data:
-            summary = json.loads(summary_data)
-            print(f"Frontend summary: {summary}")
+        # Get data from frontend (includes summary, objects, and location)
+        metadata = {}
+        data_str = request.form.get('data')
+        if data_str:
+            data = json.loads(data_str)
+            metadata = {
+                'summary': data.get('summary', {}),
+                'detected_objects': data.get('lastDetectedObjects', []),
+                'location': data.get('location')  # GPS coordinates
+            }
+            print(f"Frontend data received:")
+            print(f"  - Summary: {metadata['summary']}")
+            print(f"  - Objects: {metadata['detected_objects']}")
+            print(f"  - Location: {metadata['location']}")
         
         # Analyze video with Gemini
         gemini_result = analyze_video_with_gemini(filepath)
+        
+        # Add location to gemini_result
+        if metadata.get('location'):
+            gemini_result['location'] = metadata['location']
+            print(f"Location added to Gemini result: {metadata['location']}")
+        
+        # Save complete analysis result to file
+        result_path = save_analysis_result(filename, gemini_result, metadata)
         
         # Return combined response
         response = {
             'success': True,
             'filename': filename,
+            'result_file': os.path.basename(result_path),
             'gemini_analysis': gemini_result,
+            'location': metadata.get('location'),
             'message': 'Video uploaded and analyzed successfully'
         }
         
@@ -234,6 +221,8 @@ def upload_video():
         
     except Exception as e:
         print(f"Upload error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -257,9 +246,14 @@ def analyze_existing_video():
         # Analyze video with Gemini
         gemini_result = analyze_video_with_gemini(filepath)
         
+        # Save result
+        metadata = data.get('metadata', {})
+        result_path = save_analysis_result(filename, gemini_result, metadata)
+        
         response = {
             'success': True,
             'filename': filename,
+            'result_file': os.path.basename(result_path),
             'gemini_analysis': gemini_result
         }
         
@@ -267,6 +261,8 @@ def analyze_existing_video():
         
     except Exception as e:
         print(f"Analysis error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -287,6 +283,28 @@ def list_videos():
                 })
         
         return jsonify({'files': files}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/get-result/<filename>', methods=['GET'])
+def get_result(filename):
+    """
+    Get the analysis result for a specific video
+    """
+    try:
+        results_folder = os.path.join(UPLOAD_FOLDER, 'results')
+        result_filename = os.path.splitext(filename)[0] + '_result.json'
+        result_path = os.path.join(results_folder, result_filename)
+        
+        if not os.path.exists(result_path):
+            return jsonify({'error': 'Result not found'}), 404
+        
+        with open(result_path, 'r') as f:
+            result = json.load(f)
+        
+        return jsonify(result), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
