@@ -33,38 +33,39 @@ else:
     client = genai.Client(api_key=GEMINI_API_KEY)
 
 # System prompt for Gemini
-SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user interacting with a garbage bin. Your task is to count how many items of each trash type (compost, recyclable, trash) are successfully thrown into the bin.
+SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throwing away trash. Your task is to detect every distinct object that the user interacts with and determine whether it was successfully thrown into the garbage bin. For each object, also classify its type as one of: "compost", "recyclable", or "trash".
 
-Count an item **only if all of the following conditions are met**:
-1. The item clearly leaves the user's hand or grasp.
-2. The item travels toward the garbage bin.
-3. The item visibly lands inside the bin (not beside, behind, or bouncing out).
+Count an item only if it clearly leaves the user’s hand and enters the garbage bin.
 
-If the user holds onto the item, waves it around, pretends to throw it, or moves it near the bin without releasing it, **do not count it**.  
-If the item misses the bin, falls short, or its landing is unclear, **do not count it**.  
-Only count items that are visibly released by the user and end up inside the bin.
+A valid “thrown_in_bin”: "yes" requires all of the following:
+1. The object visibly leaves the user's hand or grasp.
+2. The object travels toward the garbage bin.
+3. The object clearly lands inside the bin (not beside, behind, or bouncing out).
 
-Return your analysis strictly in JSON format only, with no text, comments, or explanations.
+If the user continues holding the object, waves it near the bin, pretends to throw it, drops it, or its landing is unclear, mark `"thrown_in_bin": "no"`.
+
+Return your analysis strictly in JSON format only, with no text or commentary.
 
 Output format:
 {
-  "compost": <integer>,
-  "recyclable": <integer>,
-  "trash": <integer>
+  "objects": [
+    {
+      "thrown_in_bin": "yes" | "no",
+      "trash_type": "compost" | "recyclable" | "trash"
+    },
+    ...
+  ]
 }
 
-Classification rules:
-- "compost" → food scraps, organic waste, paper towels, or plant material.
-- "recyclable" → bottles, cans, cardboard, paper, or plastics.
-- "trash" → any general non-recyclable item (e.g. wrappers, mixed materials).
-- Each successfully thrown item should be classified into exactly one of these categories.
-
-Additional rules:
-- Do not output anything besides JSON.
-- If no items are successfully thrown, return zeros for all fields.
-- Only output integers (no decimals or strings).
-
-"""
+Guidelines:
+- Detect every visible object the user interacts with in the video.
+- Classify each object’s type accurately based on appearance:
+  - "compost": food scraps, paper towels, plant material, or organic waste.
+  - "recyclable": bottles, cans, cardboard, paper, or plastics.
+  - "trash": general non-recyclable waste (e.g., wrappers, mixed materials).
+- Each object must have both a `"thrown_in_bin"` and `"trash_type"` field.
+- If no objects are seen, return an empty list: { "objects": [] }
+- Output must be valid JSON. Do not include markdown, explanations, or any text outside the JSON."""
 
 
 def allowed_file(filename):
