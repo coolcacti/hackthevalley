@@ -16,10 +16,7 @@ body {
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  padding-top: 45px;
-  padding-bottom: 45px;
-  padding-right: 20px;
-  padding-left: 20px;
+  padding: 45px 20px;
 }
 
 .nav-text {
@@ -39,11 +36,9 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  box-sizing: border-box;
   align-items: center;
   width: 100%;
-  padding-right: 20px;
-  padding-left: 20px;
+  padding: 0 20px;
 }
 
 .info-box {
@@ -55,40 +50,30 @@ body {
   font-size: 24px;
   border-radius: 15px;
   height: 140px;
-  box-sizing: border-box;
   background: linear-gradient(to bottom right, #6fab61, #a6ba58);
 }
 
 .info-box2 {
   padding: 10px;
   display: flex;
-  flex-direction: column;
   justify-content: center;
-  gap: 10px;
-  font-size: 24px;
-  border-radius: 15px;
+  align-items: center;
   height: 140px;
-  box-sizing: border-box;
   background-color: transparent;
 }
 
 .info-title {
   font-weight: bold;
-  margin: 0;
   color: rgb(222, 238, 194);
-  padding-left: 7px;
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 .info-number {
   font-size: 36px;
   font-weight: bold;
-  color: rgb(255, 255, 255);
-  padding-left: 7px;
+  color: white;
   display: flex;
-  align-items: center;
   justify-content: center;
 }
 
@@ -103,16 +88,16 @@ body {
   color: white;
   border: none;
   padding: 30px 30px;
-  font-size: 20px;
+  font-size: 27px;
   font-weight: bold;
   border-radius: 25px;
   cursor: pointer;
   margin: 45px 20px;
-  display: block;
   width: 90%;
-  text-align: center;
+  display: block;
   margin-left: auto;
   margin-right: auto;
+  text-align: center;
 }
 
 .scan-button:hover {
@@ -120,26 +105,25 @@ body {
 }
 
 .leaderboard {
-  background-color: #a8d5a8;
+  background-color: #d6f2d6;
   border-radius: 25px;
-  margin: 20px 20px;
+  margin: 20px auto;
   overflow: hidden;
   width: 90%;
-  margin-left: auto;
-  margin-right: auto;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
 .leaderboard-header {
-  background: linear-gradient(to bottom right, #a6ba58, #6fab61);
+  background: linear-gradient(to right, #6fab61, #a6ba58);
   padding: 20px;
-  border-bottom: 3px solid #6b8e23;
+  border-bottom: 3px solid #719034;
+  text-align: center;
 }
 
 .leaderboard-title {
   font-size: 28px;
   font-weight: bold;
   color: #ffffff;
-  margin: 0;
 }
 
 .leaderboard-item {
@@ -147,26 +131,48 @@ body {
   align-items: center;
   gap: 15px;
   padding: 15px 20px;
-  background: #b8dd8f;
-  border-bottom: 3px solid #6b8e23;
+  background: #e1f5e1;
+  border-bottom: 2px solid #a6ba58;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.leaderboard-item:last-child {
-  border-bottom: none;
+.leaderboard-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .leaderboard-avatar {
-  width: 40px;
-  height: 40px;
-  background-color: #ff6b6b;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #a6ba58;
   flex-shrink: 0;
 }
 
-.leaderboard-name {
+.leaderboard-rank {
   font-size: 20px;
+  font-weight: bold;
   color: #4a6b2a;
+  width: 30px;
+  text-align: center;
+}
+
+.leaderboard-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.leaderboard-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #3f6133;
+}
+
+.leaderboard-score {
+  font-size: 14px;
   font-weight: 500;
+  color: #6b8e23;
 }
 
 .footer {
@@ -175,30 +181,6 @@ body {
   text-align: center;
   padding: 20px;
   font-size: 16px;
-}
-
-.main-container {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-  border-radius: 30px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.loading-text {
-  font-size: 24px;
-  color: #719034;
-  font-weight: bold;
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 90vh;
 }
 
 .main-container {
