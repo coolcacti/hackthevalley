@@ -18,27 +18,12 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
   padding: 24px;
 }
 
-.app-heading {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-left: 1rem;
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  color: #1c5f2f; /* You can replace this with any color code or name */
-}
-
-
-
-
-
 /* top bar */
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: linear-gradient(90deg, rgba(100,170,120,0.08), rgba(100,170,120,0.02));
   position: relative;
 }
 .top-bar .title { font-weight: 700; color: var(--accent); letter-spacing: 0.6px; }
@@ -74,6 +59,8 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
   width: 100%;
   padding-top: calc(100% * 9 / 16); /* 16:9 area */
   background: #000;
+  border-radius: 15px;
+
 }
 .camera-video, .camera-canvas {
   position: absolute;
@@ -81,7 +68,8 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 15px;
+
 }
 /* canvas drawn by detection will show overlays */
 
@@ -116,19 +104,56 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
 .send-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
 
 /* info panel */
-.info-panel {
-  margin: 10px 14px 6px;
-  padding: 10px;
+.app-heading {
+  font-size: 1.2rem;
+  font-weight: bold;
+  flex-grow: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #1c5f2f;
+  white-space: nowrap;
+}
+
+.info-panel {
+  margin: 10px 0 6px;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
   gap: 8px;
   border-radius: 12px;
 }
-.summary { display: flex; justify-content: space-between; gap: 6px; }
-.sum-item { flex: 1; padding: 6px; border-radius: 8px; text-align: center; font-weight: 700; color: #fff; }
-.sum-item.recyclable { background: linear-gradient(90deg,#65b36a,#4e8f41); }
-.sum-item.compost { background: linear-gradient(90deg,#d29956,#b27a3f); }
-.sum-item.trash { background: linear-gradient(90deg,#b35a5a,#8f3b3b); }
+
+.summary { 
+  display: flex; 
+  justify-content: space-between;
+  gap: 8px; 
+  width: 100%;
+}
+
+.sum-item { 
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 18px 12px;
+  border-radius: 16px;
+  text-align: center;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.sum-item > div {
+  width: 100%;
+}
+
+.sum-item.recyclable { background: linear-gradient(135deg,#65b36a,#4e8f41); }
+.sum-item.compost { background: linear-gradient(135deg,#d29956,#b27a3f); }
+.sum-item.trash { background: linear-gradient(135deg,#b35a5a,#8f3b3b); }
+
 
 .detected-list { font-size: 12px; color: #2e5d34; }
 .det-item { padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.04); }
