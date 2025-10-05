@@ -33,7 +33,25 @@ else:
     client = genai.Client(api_key=GEMINI_API_KEY)
 
 # System prompt for Gemini
-SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throwing trash. Your task is to determine if the trash was successfully thrown into the garbage bin. If yes, return "yes"; if not, return "no". Also, classify the trash as one of: "compost", "recyclable", or "trash". Only return the output in JSON format: { "thrown_in_bin": "yes" | "no", "trash_type": "compost" | "recyclable" | "trash" }. Use visual cues from the video to decide if the trash lands in the bin, and classify common household waste correctly. Do not include any extra commentary."""
+SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throwing away trash. Your goal is to determine how many items of each trash type (compost, recyclable, trash) were successfully thrown into the bin.
+
+Return your analysis strictly in JSON format only, with no extra commentary or explanation.
+
+Output format:
+{
+  "compost": <integer>,
+  "recyclable": <integer>,
+  "trash": <integer>
+}
+
+Guidelines:
+- Count only items that clearly land inside the bin as "successful".
+- Classify each item into one of three categories:
+  - "compost" for food waste or organic materials
+  - "recyclable" for plastics, metals, cardboard, or glass
+  - "trash" for general non-recyclable waste
+- Only output valid JSON with the structure above. No markdown, no text, and no nesting.
+"""
 
 
 def allowed_file(filename):
