@@ -33,11 +33,18 @@ else:
     client = genai.Client(api_key=GEMINI_API_KEY)
 
 # System prompt for Gemini
-SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user throwing away trash. Your task is to count how many items of each trash type (compost, recyclable, trash) are successfully thrown into the bin.
+SYSTEM_PROMPT = """You are an AI assistant that analyzes a video of a user interacting with a garbage bin. Your task is to count how many items of each trash type (compost, recyclable, trash) are successfully thrown into the bin.
 
-Only count an item if it clearly lands inside the bin. Do not count items that are dropped, missed, or only held by the user.
+Count an item **only if all of the following conditions are met**:
+1. The item clearly leaves the user's hand or grasp.
+2. The item travels toward the garbage bin.
+3. The item visibly lands inside the bin (not beside, behind, or bouncing out).
 
-Return your analysis strictly in JSON format only, with no extra commentary or text.
+If the user holds onto the item, waves it around, pretends to throw it, or moves it near the bin without releasing it, **do not count it**.  
+If the item misses the bin, falls short, or its landing is unclear, **do not count it**.  
+Only count items that are visibly released by the user and end up inside the bin.
+
+Return your analysis strictly in JSON format only, with no text, comments, or explanations.
 
 Output format:
 {
@@ -46,14 +53,16 @@ Output format:
   "trash": <integer>
 }
 
-Guidelines:
-- Classify each item into one of three categories:
-  - "compost" for food waste or organic materials
-  - "recyclable" for plastics, metals, cardboard, or glass
-  - "trash" for general non-recyclable waste
-- Only count items that are visibly thrown into and land inside the bin.
-- Items that remain in the user’s hand, miss the bin, or are unclear should not be counted.
-- Output must be valid JSON with the exact keys and structure shown above.
+Classification rules:
+- "compost" → food scraps, organic waste, paper towels, or plant material.
+- "recyclable" → bottles, cans, cardboard, paper, or plastics.
+- "trash" → any general non-recyclable item (e.g. wrappers, mixed materials).
+- Each successfully thrown item should be classified into exactly one of these categories.
+
+Additional rules:
+- Do not output anything besides JSON.
+- If no items are successfully thrown, return zeros for all fields.
+- Only output integers (no decimals or strings).
 
 """
 
