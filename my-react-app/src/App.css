@@ -16,7 +16,10 @@ body {
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  padding: 45px;
+  padding-top: 45px;
+  padding-bottom: 45px;
+  padding-right: 20px;
+  padding-left: 20px;
 }
 
 .nav-text {
@@ -26,7 +29,7 @@ body {
 }
 
 .nav-avatar {
-  width:60px;
+  width: 60px;
   height: 60px;
   border-radius: 50%;
   object-fit: cover;
@@ -36,10 +39,11 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  padding-left: 10px;
-  padding-right: 20px;
   box-sizing: border-box;
   align-items: center;
+  width: 100%;
+  padding-right: 20px;
+  padding-left: 20px;
 }
 
 .info-box {
@@ -105,8 +109,10 @@ body {
   cursor: pointer;
   margin: 45px 20px;
   display: block;
-  width: 100%;
+  width: 90%;
   text-align: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .scan-button:hover {
@@ -118,7 +124,9 @@ body {
   border-radius: 25px;
   margin: 20px 20px;
   overflow: hidden;
-  width: 100%;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .leaderboard-header {
@@ -190,5 +198,16 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 90vh;
+}
+
+.main-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 30px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
