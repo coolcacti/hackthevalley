@@ -122,21 +122,20 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
   flex-direction: row;
   gap: 8px;
   border-radius: 12px;
+  justify-content: center; /* center items within container */
 }
 
 .summary { 
   display: flex; 
-  justify-content: space-between;
   gap: 8px; 
-  width: 100%;
+  width: 100%; 
 }
 
-.sum-item { 
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 18px 12px;
+.sum-item {
+  flex: 1 1 0;           
+  padding: 18px 12px;      /* top/bottom 18px, left/right 12px */
   border-radius: 16px;
-  text-align: center;
+  text-align: center;      /* center the text */
   font-weight: 700;
   color: #fff;
   display: flex;
@@ -144,11 +143,18 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Arial; backgroun
   align-items: center;
   justify-content: center;
   gap: 4px;
+  word-wrap: normal;       /* prevent wrapping */
 }
 
 .sum-item > div {
   width: 100%;
+  white-space: nowrap;     
+  overflow: hidden;        /* hide anything that overflows */
+  text-overflow: clip;     /* no ellipsis */
+  font-size: clamp(12px, 4vw, 16px); 
+  padding: 0 6px;          /* small horizontal padding to avoid touching edges */
 }
+
 
 .sum-item.recyclable { background: linear-gradient(135deg,#65b36a,#4e8f41); }
 .sum-item.compost { background: linear-gradient(135deg,#d29956,#b27a3f); }

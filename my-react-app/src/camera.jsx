@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import "./camera.css";
 import { useNavigate } from "react-router-dom";
 
-
 // We'll dynamically import TF so the bundle isn't huge until needed
 // npm install @tensorflow/tfjs @tensorflow-models/coco-ssd
 
@@ -13,6 +12,7 @@ export default function TrashRecorder() {
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
   const modelRef = useRef(null);
+  const locationRef = useRef(null); // Store location coordinates
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user, setUser] = useState({ name: "Samuel", avatar: "https://i.pravatar.cc/40" });
@@ -23,6 +23,7 @@ export default function TrashRecorder() {
   const [detections, setDetections] = useState([]);
   const [summary, setSummary] = useState({ Recyclable: 0, Compost: 0, Trash: 0 });
   const [lastDetectedObjects, setLastDetectedObjects] = useState([]);
+  const [locationStatus, setLocationStatus] = useState("not-requested"); // Track GPS status
 
   const categoryMap = {
     bottle: "Recyclable",
@@ -67,6 +68,40 @@ export default function TrashRecorder() {
     return "Trash";
   };
 
+  // Request GPS location
+  const requestLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus("not-supported");
+      console.warn("Geolocation is not supported by this browser");
+      return;
+    }
+
+    setLocationStatus("requesting");
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        locationRef.current = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.timestamp
+        };
+        setLocationStatus("acquired");
+        console.log("Location acquired:", locationRef.current);
+      },
+      (error) => {
+        setLocationStatus("denied");
+        console.error("Error getting location:", error.message);
+        // Continue without location - don't block recording
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   // Camera init
   useEffect(() => {
     let mounted = true;
@@ -80,6 +115,9 @@ export default function TrashRecorder() {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setStatus("ready");
+        
+        // Request location when camera is ready
+        requestLocation();
       } catch (err) {
         console.error("Camera error:", err);
         setStatus("camera-error");
@@ -181,6 +219,12 @@ export default function TrashRecorder() {
   const startRecording = () => {
     const stream = videoRef.current.srcObject;
     if (!stream) return alert("Camera not initialized.");
+    
+    // Update location right before recording starts
+    if (locationStatus === "acquired") {
+      requestLocation(); // Refresh location
+    }
+    
     chunksRef.current = [];
     recorderRef.current = new MediaRecorder(stream, { mimeType: "video/webm; codecs=vp9" });
 
@@ -210,15 +254,24 @@ export default function TrashRecorder() {
     setStatus("ready");
   };
 
-  // Integrated sendRecording function
+  // Integrated sendRecording function with location data
   const sendRecording = async () => {
     if (!recorderRef.current || !recorderRef.current.recordedBlob) return alert("No recording available.");
 
     const form = new FormData();
     form.append("video", recorderRef.current.recordedBlob, "recording.webm");
-    form.append("summary", JSON.stringify({ summary, lastDetectedObjects }));
+    
+    // Prepare data to send
+    const dataToSend = {
+      summary,
+      lastDetectedObjects,
+      location: locationRef.current || null // Include location coordinates
+    };
+    
+    form.append("data", JSON.stringify(dataToSend));
 
     try {
+      setStatus("sending");
       const res = await fetch("http://localhost:5000/api/upload", { method: "POST", body: form });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
@@ -232,17 +285,27 @@ export default function TrashRecorder() {
     }
   };
 
-  const goBack = () => {
-    navigate('/app');
+  // Helper to display location status
+  const getLocationIcon = () => {
+    switch (locationStatus) {
+      case "acquired": return "📍";
+      case "requesting": return "⏳";
+      case "denied": return "❌";
+      case "not-supported": return "🚫";
+      default: return "📍";
+    }
   };
 
+  const goBack = () => {
+    navigate('/app');
+  }
 
   return (
     <div className="app-phone-root">
       <div className="phone-frame">
         <div className="top-bar">
           <button className="btn back" onClick={goBack}>&#60;</button>
-          <div className="app-heading">Dump it Like it's Hot</div>
+          <div className="app-heading">Scan for Trash</div>
           <div style={{ position: "relative" }}>
             {dropdownOpen && (
               <div className="avatar-menu">
@@ -257,25 +320,42 @@ export default function TrashRecorder() {
         <div className="camera-area">
           <video ref={videoRef} className="camera-video" playsInline muted />
           <canvas ref={canvasRef} className="camera-canvas" />
+          
+          {/* Location indicator */}
+          <div style={{
+            position: "absolute",
+            top: "10px",
+            left: "10px",
+            background: "rgba(0,0,0,0.6)",
+            color: "white",
+            padding: "5px 10px",
+            borderRadius: "5px",
+            fontSize: "12px"
+          }}>
+            {getLocationIcon()} {locationStatus === "acquired" ? "GPS Active" : "GPS: " + locationStatus}
+          </div>
         </div>
 
         <div className="info-panel">
-          <div className="sum-item recyclable">
-            <div style={{ fontSize: '32px' }}>♻️</div>
-            <div style={{ fontSize: '11px', fontWeight: '600' }}>Recycle</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{summary.Recyclable}</div>
-          </div>
-          <div className="sum-item compost">
-            <div style={{ fontSize: '32px' }}>🍂</div>
-            <div style={{ fontSize: '11px', fontWeight: '600' }}>Compost</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{summary.Compost}</div>
-          </div>
-          <div className="sum-item trash">
-            <div style={{ fontSize: '32px' }}>🗑️</div>
-            <div style={{ fontSize: '11px', fontWeight: '600' }}>Trash</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{summary.Trash}</div>
-          </div>
-        </div>
+  <div className="summary">
+    <div className="sum-item recyclable">
+      <div className="icon">♻️</div>
+      <div className="label">Recycle</div>
+      <div className="value">{summary.Recyclable}</div>
+    </div>
+    <div className="sum-item compost">
+      <div className="icon">🍂</div>
+      <div className="label">Compost</div>
+      <div className="value">{summary.Compost}</div>
+    </div>
+    <div className="sum-item trash">
+      <div className="icon">🗑</div>
+      <div className="label">Trash</div>
+      <div className="value">{summary.Trash}</div>
+    </div>
+  </div>
+</div>
+
 
         <div className="controls">
           {!isRecording ? (

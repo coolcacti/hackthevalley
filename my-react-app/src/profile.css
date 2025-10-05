@@ -232,10 +232,10 @@ body {
 .logout-button {
   cursor: 'pointer';
   margin-right: 15px;
-  color: #2e5d34;
-  background: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  background: rgba(44, 148, 51, 0.6);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  padding: 3px 8px;
+  padding: 13px 18px;
   border-radius: 10px;
   text-align: center;
   margin-top: 8px;

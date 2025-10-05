@@ -18,6 +18,16 @@ function App() {
     navigate('/camera');
   };
 
+  // Mock leaderboard data
+  const leaderboardUsers = [
+    { name: "Luna Green", img: "/avatar.png", score: 240 },
+    { name: "EcoHero99", img: "/avatar.png", score: 220 },
+    { name: "ForestFan", img: "/avatar.png", score: 200 },
+    { name: "RecycleQueen", img: "/avatar.png", score: 180 },
+    { name: "NatureNinja", img: "/avatar.png", score: 160 },
+    { name: "PlanetPal", img: "/avatar.png", score: 150 },
+  ];
+
   return (
     <div className='main-container'>
       <SyncUser />
@@ -27,7 +37,7 @@ function App() {
         </div>
         <div>
           <img 
-            src="/pfp.png" 
+            src="/avatar1.jpeg" 
             alt="pfp" 
             className="nav-avatar"
             onClick={goToProfile}
@@ -49,33 +59,20 @@ function App() {
       <button className="scan-button" onClick={goToCamera}> 📸‎ ‎ Submit Item</button>
 
       <div className="leaderboard">
-          <div className="leaderboard-header">
-            <h2 className="leaderboard-title">Leaderboard</h2>
-          </div>
-          <div className="leaderboard-item">
-            <div className="leaderboard-avatar"></div>
-            <span className="leaderboard-name">user</span>
-          </div>
-          <div className="leaderboard-item">
-            <div className="leaderboard-avatar"></div>
-            <span className="leaderboard-name">user</span>
-          </div>
-          <div className="leaderboard-item">
-            <div className="leaderboard-avatar"></div>
-            <span className="leaderboard-name">user</span>
-          </div>
-          <div className="leaderboard-item">
-            <div className="leaderboard-avatar"></div>
-            <span className="leaderboard-name">user</span>
-          </div>
-                <div className="leaderboard-item">
-            <div className="leaderboard-avatar"></div>
-            <span className="leaderboard-name">user</span>
-          </div>
-          <div className="leaderboard-item">
-            <div className="leaderboard-avatar"></div>
-            <span className="leaderboard-name">user</span>
+        <div className="leaderboard-header">
+          <h2 className="leaderboard-title">Leaderboard</h2>
         </div>
+
+        {leaderboardUsers.map((user, index) => (
+          <div className="leaderboard-item" key={index}>
+            <div className="leaderboard-rank">{index + 1}</div>
+            <img src={user.img} alt={user.name} className="leaderboard-avatar"/>
+            <div className="leaderboard-info">
+              <span className="leaderboard-name">{user.name}</span>
+              <span className="leaderboard-score">{user.score} pts</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       <footer className="footer">
