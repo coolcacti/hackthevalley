@@ -19,7 +19,7 @@ export default function TrashRecorder() {
 
   const [isRecording, setIsRecording] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [status, setStatus] = useState("idle"); // 'idle' | 'ready' | 'recording' | 'sending'
+  const [status, setStatus] = useState("idle"); // 'idle' | 'ready' | 'recording' | 'sending' | 'sent-success' | 'send-error'
   const [detections, setDetections] = useState([]);
   const [summary, setSummary] = useState({ Recyclable: 0, Compost: 0, Trash: 0 });
   const [lastDetectedObjects, setLastDetectedObjects] = useState([]);
@@ -234,7 +234,6 @@ export default function TrashRecorder() {
     recorderRef.current.onstop = async () => {
       const blob = new Blob(chunksRef.current, { type: "video/webm" });
       const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
       setStatus("ready-to-send");
       recorderRef.current.recordedBlob = blob;
     };
@@ -251,6 +250,13 @@ export default function TrashRecorder() {
     }
     setIsRecording(false);
     setIsDetecting(false);
+    
+    // Turn off camera
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    
     setStatus("ready");
   };
 
@@ -276,12 +282,12 @@ export default function TrashRecorder() {
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
       console.log("Server response:", data);
-      alert("Video sent successfully!");
-      setStatus("sent");
+      
+      // Show success screen instead of alert
+      setStatus("sent-success");
     } catch (err) {
       console.error(err);
-      alert("Upload failed");
-      setStatus("ready-to-send");
+      setStatus("send-error");
     }
   };
 
@@ -298,6 +304,92 @@ export default function TrashRecorder() {
 
   const goBack = () => {
     navigate('/app');
+  }
+
+  // Show loading screen while setting up
+  if (status === "idle" || status === "loading-model") {
+    return <div className='loading-text'>Loading camera and AI model...</div>;
+  }
+
+  // Show sending screen
+  if (status === "sending") {
+    return <div className='loading-text'>Sending video to AI model...</div>;
+  }
+
+  // Show success screen with summary
+  if (status === "sent-success") {
+    return (
+      <div className='success-text'>
+        <div style={{ fontSize: "24px", marginBottom: "20px", fontWeight: "bold" }}>✅ Successfully Sent!</div>
+        <div style={{ fontSize: "18px", marginBottom: "30px" }}>Here's what you picked up:</div>
+        <div style={{ display: "flex", flexDirection: "row",justifyContent: "space-around", width: "100%" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "40px" }}>♻️</div>
+            <div style={{ fontSize: "14px", color: "#4e8f41" }}>Recyclable</div>
+            <div style={{ fontSize: "24px", fontWeight: "bold" }}>{summary.Recyclable}</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "40px" }}>🍂</div>
+            <div style={{ fontSize: "14px", color: "#c07b2b" }}>Compost</div>
+            <div style={{ fontSize: "24px", fontWeight: "bold" }}>{summary.Compost}</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "40px" }}>🗑</div>
+            <div style={{ fontSize: "14px", color: "#9b2f2f" }}>Trash</div>
+            <div style={{ fontSize: "24px", fontWeight: "bold" }}>{summary.Trash}</div>
+          </div>
+        </div>
+
+        <button 
+          onClick={goBack} 
+          style={{
+            marginTop: "20px",
+            padding: "12px 30px",
+            background: "#4e8f41",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+            cursor: "pointer",
+            fontSize: "16px"
+          }}
+        >
+          Back Home
+        </button>
+      </div>
+    );
+  }
+
+  // Show error screen with retry option
+  if (status === "send-error") {
+    return (
+      <div className='loading-text'>
+        <div>Failed to send video. Please try again later.</div>
+        <button 
+          onClick={goBack} 
+          style={{
+            marginTop: "10px",
+            padding: "12px 30px",
+            background: "#4e8f41",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+            cursor: "pointer",
+            fontSize: "16px"
+          }}
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // Show error states
+  if (status === "camera-error") {
+    return <div className='loading-text'>Camera access denied. Please enable camera permissions.</div>;
+  }
+
+  if (status === "model-error") {
+    return <div className='loading-text'>Failed to load AI model. Please refresh.</div>;
   }
 
   return (
@@ -337,25 +429,24 @@ export default function TrashRecorder() {
         </div>
 
         <div className="info-panel">
-  <div className="summary">
-    <div className="sum-item recyclable">
-      <div className="icon">♻️</div>
-      <div className="label">Recycle</div>
-      <div className="value">{summary.Recyclable}</div>
-    </div>
-    <div className="sum-item compost">
-      <div className="icon">🍂</div>
-      <div className="label">Compost</div>
-      <div className="value">{summary.Compost}</div>
-    </div>
-    <div className="sum-item trash">
-      <div className="icon">🗑</div>
-      <div className="label">Trash</div>
-      <div className="value">{summary.Trash}</div>
-    </div>
-  </div>
-</div>
-
+          <div className="summary">
+            <div className="sum-item recyclable">
+              <div className="icon">♻️</div>
+              <div className="label">Recycle</div>
+              <div className="value">{summary.Recyclable}</div>
+            </div>
+            <div className="sum-item compost">
+              <div className="icon">🍂</div>
+              <div className="label">Compost</div>
+              <div className="value">{summary.Compost}</div>
+            </div>
+            <div className="sum-item trash">
+              <div className="icon">🗑</div>
+              <div className="label">Trash</div>
+              <div className="value">{summary.Trash}</div>
+            </div>
+          </div>
+        </div>
 
         <div className="controls">
           {!isRecording ? (
