@@ -1,3 +1,4 @@
+// SyncUser.jsx
 import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect } from "react";
 
@@ -18,7 +19,6 @@ function SyncUser() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          // pass the profile info explicitly
           body: JSON.stringify({
             name: user.name,
             email: user.email,
@@ -26,12 +26,19 @@ function SyncUser() {
           }),
         });
 
+        const body = await resp.json().catch(() => null);
         console.log("sync status:", resp.status);
-        console.log("sync body:", await resp.json().catch(() => null));
+        console.log("sync body:", body);
+
+        if (resp.ok) {
+          window.dispatchEvent(new CustomEvent("userSynced", { detail: body }));
+        }
+
       } catch (err) {
         console.error("User sync failed:", err);
       }
     };
+
     syncUser();
   }, [isAuthenticated, user, getAccessTokenSilently]);
 

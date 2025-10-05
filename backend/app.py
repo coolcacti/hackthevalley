@@ -23,47 +23,48 @@ from datetime import datetime, timezone
 
 from datetime import datetime, timezone
 
+from datetime import datetime, timezone
+
 def update_user_scores(userAuth0Id, gemini_result=None, metadata=None, video_filename=None):
     try:
         compost = recycle = trash = 0
-
         objects = []
         if gemini_result and isinstance(gemini_result, dict):
             objects = gemini_result.get("objects", []) or []
 
+        any_successful = False
         if objects:
             for obj in objects:
-                thrown = str(obj.get("thrown_in_bin", "")).lower()
-                ttype = str(obj.get("trash_type", "")).lower()
+                thrown = str(obj.get("thrown_in_bin", "")).strip().lower()
+                ttype = str(obj.get("trash_type", "")).strip().lower()
 
-                if thrown != "yes":
-                    continue
+                if thrown == "yes":
+                    any_successful = True
+                    if "compost" in ttype or "organic" in ttype or "food" in ttype:
+                        compost += 1
+                    elif "recycl" in ttype or "plastic" in ttype or "bottle" in ttype or "can" in ttype or "paper" in ttype or "cardboard" in ttype:
+                        recycle += 1
+                    else:
+                        trash += 1
 
-                if "compost" in ttype or "organic" in ttype or "food" in ttype:
-                    compost += 1
-                elif "recycl" in ttype or "plastic" in ttype or "bottle" in ttype or "can" in ttype or "paper" in ttype or "cardboard" in ttype:
-                    recycle += 1
-                else:
-                    trash += 1
-        else:
-            if metadata and isinstance(metadata, dict):
-                summary = metadata.get("summary", {}) or {}
-                try:
-                    recycle = int(summary.get("Recyclable", 0))
-                except Exception:
-                    recycle = 0
-                try:
-                    compost = int(summary.get("Compost", 0))
-                except Exception:
-                    compost = 0
-                try:
-                    trash = int(summary.get("Trash", 0))
-                except Exception:
-                    trash = 0
+        if not objects and metadata and isinstance(metadata, dict):
+            summary = metadata.get("summary", {}) or {}
+            try:
+                recycle = int(summary.get("Recyclable", 0))
+            except Exception:
+                recycle = 0
+            try:
+                compost = int(summary.get("Compost", 0))
+            except Exception:
+                compost = 0
+            try:
+                trash = int(summary.get("Trash", 0))
+            except Exception:
+                trash = 0
+            # If summary shows >0 then treat as successful (legacy fallback)
+            any_successful = (compost + recycle + trash) > 0
 
         total = compost + recycle + trash
-        if total == 0 and not (metadata and metadata.get("location")):
-            print("update_user_scores: nothing to increment and no location; still will mark processed video if filename provided.")
 
         update_doc = {}
         inc_doc = {}
@@ -71,7 +72,6 @@ def update_user_scores(userAuth0Id, gemini_result=None, metadata=None, video_fil
         if recycle: inc_doc["recycle"] = recycle
         if trash: inc_doc["trash"] = trash
         if total: inc_doc["totalItemsCollected"] = total
-
         if inc_doc:
             update_doc["$inc"] = inc_doc
 
@@ -82,7 +82,8 @@ def update_user_scores(userAuth0Id, gemini_result=None, metadata=None, video_fil
                 update_doc["$push"]["locations"] = {
                     "latitude": loc.get("latitude"),
                     "longitude": loc.get("longitude"),
-                    "timestamp": datetime.now(timezone.utc)
+                    "timestamp": datetime.now(timezone.utc),
+                    "successfulDeposit": bool(any_successful)
                 }
 
         if video_filename:
@@ -100,7 +101,7 @@ def update_user_scores(userAuth0Id, gemini_result=None, metadata=None, video_fil
         result = users_collection.update_one(filter_doc, update_doc)
 
         print(f"update_user_scores: filter={filter_doc} applying update={update_doc}")
-        print(f"update_user_scores: matched={result.matched_count} modified={result.modified_count}")
+        print(f"update_user_scores: matched={result.matched_count} modified={result.modified_count} (any_successful={any_successful}, compost={compost}, recycle={recycle}, trash={trash})")
 
         return {"matched_count": result.matched_count, "modified_count": result.modified_count}
 

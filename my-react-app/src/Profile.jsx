@@ -1,4 +1,3 @@
-// src/profile.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -22,16 +21,7 @@ function Profile() {
   const navigate = useNavigate();
   const { user, logout } = useAuth0();
 
-  const fullName = user?.name || 'User';
-
-  const avatarOptions = ["/avatar1.jpeg", "/avatar2.jpeg", "/avatar3.jpeg"];
-
-  const [profileUser, setProfileUser] = useState({
-    name: fullName,
-    avatar: "/avatar1.jpeg",
-    trashCollected: 128,
-  });
-
+  const [dbUser, setDbUser] = useState(null);
   const [currentFrame, setCurrentFrame] = useState(0);
   const pixelFrames = ["/pixel1.png", "/pixel2.png", "/pixel3.png"];
 
@@ -42,19 +32,45 @@ function Profile() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    async function fetchDbUser() {
+      if (!user?.sub) return;
+      try {
+        const res = await fetch('http://localhost:5000/api/users');
+        const users = await res.json();
+        const found = users.find(u => u.userAuth0Id === user.sub);
+        setDbUser(found);
+      } catch (err) {
+        console.error('Failed to fetch user:', err);
+      }
+    }
+    fetchDbUser();
+  }, [user]);
+
   const handleBack = () => {
     navigate("/app");
   };
 
-  const maxTrash = 200;
+  const totalItems = dbUser?.totalItemsCollected ?? 0;
+  const level = Math.floor(Math.log2(totalItems + 1));
+  const nextLevelThreshold = Math.pow(2, level + 1) - 1;
   const levelPercentage = Math.min(
-    (profileUser.trashCollected / maxTrash) * 100,
+    (totalItems / nextLevelThreshold) * 100,
     100
   );
 
-  const goToMap = () => {
-    navigate('/map');
-  };
+  const compost = dbUser?.compost ?? 0;
+  const recycle = dbUser?.recycle ?? 0;
+  const trash = dbUser?.trash ?? 0;
+  const totalDist = compost + recycle + trash || 1;
+  const compostPercent = ((compost / totalDist) * 100).toFixed(0);
+  const recyclePercent = ((recycle / totalDist) * 100).toFixed(0);
+  const trashPercent = ((trash / totalDist) * 100).toFixed(0);
+
+  const locations = (dbUser?.locations ?? []).filter(loc => loc.successfulDeposit);
+  const mapCenter = locations.length
+    ? [locations[0].latitude, locations[0].longitude]
+    : [43.788991157897776, -79.19059949394783];
 
   return (
     <div className="app-container">
@@ -65,14 +81,14 @@ function Profile() {
 
         <div className="top-right-avatar">
           <img
-            src={profileUser.avatar}
+            src={dbUser?.picture || "/avatar1.jpeg"}
             alt="Profile"
             className="profile-avatar"
           />
         </div>
 
         <div className="character-container">
-          <div className="character-name">{profileUser.name}</div>
+          <div className="character-name">{dbUser?.username || user?.name || "User"}</div>
           <img
             src={pixelFrames[currentFrame]}
             alt="Pixel Character"
@@ -81,7 +97,7 @@ function Profile() {
         </div>
 
         <div className="level-container">
-          <p className="level-text">Level 1</p>
+          <p className="level-text">Level {level}</p>
           <div className="level-bar">
             <div
               className="level-fill"
@@ -89,7 +105,7 @@ function Profile() {
             ></div>
           </div>
           <p className="level-value">
-            {profileUser.trashCollected} / {maxTrash} kg
+            {totalItems} / {nextLevelThreshold} items
           </p>
         </div>
 
@@ -98,20 +114,23 @@ function Profile() {
           <div className="widget-bar">
             <span>Compost</span>
             <div className="bar-background">
-              <div className="bar-fill compost" style={{ width: "50%" }}></div>
+              <div className="bar-fill compost" style={{ width: `${compostPercent}%` }}></div>
             </div>
+            <span className="bar-value">{compost}</span>
           </div>
           <div className="widget-bar">
             <span>Recycle</span>
             <div className="bar-background">
-              <div className="bar-fill recycle" style={{ width: "30%" }}></div>
+              <div className="bar-fill recycle" style={{ width: `${recyclePercent}%` }}></div>
             </div>
+            <span className="bar-value">{recycle}</span>
           </div>
           <div className="widget-bar">
             <span>Trash</span>
             <div className="bar-background">
-              <div className="bar-fill trash" style={{ width: "20%" }}></div>
+              <div className="bar-fill trash" style={{ width: `${trashPercent}%` }}></div>
             </div>
+            <span className="bar-value">{trash}</span>
           </div>
         </div>
 
@@ -127,10 +146,10 @@ function Profile() {
             cursor: 'pointer',
             zIndex: 1,
           }}
-          onClick={goToMap}
+          onClick={() => navigate('/map')}
         >
           <MapContainer
-            center={[43.788991157897776, -79.19059949394783]}
+            center={mapCenter}
             zoom={13}
             scrollWheelZoom={false}
             style={{ width: '100%', height: '180px' }}
@@ -143,12 +162,17 @@ function Profile() {
               attribution=""
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Marker
-              position={[43.78754535704544, -79.19009374471229]}
-              icon={redIcon}
-            >
-              <Popup>You collected a trash item here!</Popup>
-            </Marker>
+            {locations.map((loc, idx) => (
+              <Marker
+                key={idx}
+                position={[loc.latitude, loc.longitude]}
+                icon={redIcon}
+              >
+                <Popup>
+                  {`Collected at ${new Date(loc.timestamp).toLocaleString()}`}
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
         </div>
 

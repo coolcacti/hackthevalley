@@ -1,12 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Map.css";
 import "leaflet/dist/leaflet.css";
-import { useNavigate } from "react-router-dom";  // Add this import
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-// 1. Import L from Leaflet
+import { useNavigate } from "react-router-dom";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 
-// 2. Define the custom icon
 const redIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
@@ -20,6 +18,36 @@ const redIcon = new L.Icon({
 
 function Map() {
   const navigate = useNavigate();
+  const [allLocations, setAllLocations] = useState([]);
+
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch("http://localhost:5000/api/users");
+        const users = await res.json();
+        const locations = users
+          .flatMap(user =>
+            (user.locations ?? []).filter(loc => loc.successfulDeposit)
+              .map(loc => ({
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+                timestamp: loc.timestamp,
+                username: user.username,
+                picture: user.picture
+              }))
+          );
+        setAllLocations(locations);
+      } catch (err) {
+        console.error("Failed to fetch locations:", err);
+      }
+    }
+    fetchLocations();
+  }, []);
+
+  const mapCenter = allLocations.length
+    ? [allLocations[0].latitude, allLocations[0].longitude]
+    : [43.788991157897776, -79.19059949394783];
+
   return (
     <div className="full-map-container">
       <button className="back-button2" onClick={() => navigate('/profile')}>
@@ -27,7 +55,7 @@ function Map() {
       </button>
 
       <MapContainer
-        center={[43.788991157897776, -79.19059949394783]}
+        center={mapCenter}
         zoom={13}
         scrollWheelZoom={false}
         style={{ width: '100%', height: '100%' }}
@@ -36,12 +64,25 @@ function Map() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker
-          position={[43.78754535704544, -79.19009374471229]}
-          icon={redIcon}
-        >
-          <Popup>You collected a trash item here!</Popup>
-        </Marker>
+        {allLocations.map((loc, idx) => (
+          <Marker
+            key={idx}
+            position={[loc.latitude, loc.longitude]}
+            icon={redIcon}
+          >
+            <Popup>
+              <div>
+                <img
+                  src={loc.picture || "/avatar1.jpeg"}
+                  alt={loc.username}
+                  style={{ width: 32, height: 32, borderRadius: "50%" }}
+                />
+                <div><strong>{loc.username}</strong></div>
+                <div>{`Collected at ${new Date(loc.timestamp).toLocaleString()}`}</div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );

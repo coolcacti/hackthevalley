@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "./camera.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
+const { user } = useAuth0()
 
 // We'll dynamically import TF so the bundle isn't huge until needed
 // npm install @tensorflow/tfjs @tensorflow-models/coco-ssd
@@ -251,13 +252,13 @@ export default function TrashRecorder() {
     }
     setIsRecording(false);
     setIsDetecting(false);
-    
+
     // Turn off camera
     if (videoRef.current?.srcObject) {
       videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
-    
+
     setStatus("ready");
   };
   const sendRecording = async () => {
@@ -268,13 +269,11 @@ export default function TrashRecorder() {
     form.append("video", recorderRef.current.recordedBlob, "recording.webm");
 
     const dataToSend = {
+      userAuth0Id: user?.sub,
       summary,
       lastDetectedObjects,
       location: locationRef.current || null,
-      // Provide the Auth0 id. try auth0User.sub first, fall back to `user.userAuth0Id`
-      userAuth0Id: auth0User?.sub || user?.userAuth0Id || null
     };
-
     form.append("data", JSON.stringify(dataToSend));
 
     try {
@@ -287,7 +286,7 @@ export default function TrashRecorder() {
 
       const data = await res.json();
       console.log("Server response:", data);
-      
+
       // Show success screen instead of alert
       setStatus("sent-success");
     } catch (err) {
@@ -327,7 +326,7 @@ export default function TrashRecorder() {
       <div className='success-text'>
         <div style={{ fontSize: "24px", marginBottom: "20px", fontWeight: "bold" }}>✅ Successfully Sent!</div>
         <div style={{ fontSize: "18px", marginBottom: "30px" }}>Here's what you picked up:</div>
-        <div style={{ display: "flex", flexDirection: "row",justifyContent: "space-around", width: "100%" }}>
+        <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-around", width: "100%" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "40px" }}>♻️</div>
             <div style={{ fontSize: "14px", color: "#4e8f41" }}>Recyclable</div>
@@ -345,8 +344,8 @@ export default function TrashRecorder() {
           </div>
         </div>
 
-        <button 
-          onClick={goBack} 
+        <button
+          onClick={goBack}
           style={{
             marginTop: "20px",
             padding: "12px 30px",
@@ -369,8 +368,8 @@ export default function TrashRecorder() {
     return (
       <div className='loading-text'>
         <div>Failed to send video. Please try again later.</div>
-        <button 
-          onClick={goBack} 
+        <button
+          onClick={goBack}
           style={{
             marginTop: "10px",
             padding: "12px 30px",
@@ -434,24 +433,24 @@ export default function TrashRecorder() {
         </div>
 
         <div className="info-panel">
-                  <div className="summary">
-                    <div className="sum-item recyclable">
-                      <div className="icon">♻️</div>
-                      <div className="label">Recycle</div>
-                      <div className="value">{summary.Recyclable}</div>
-                    </div>
-                    <div className="sum-item compost">
-                      <div className="icon">🍂</div>
-                      <div className="label">Compost</div>
-                      <div className="value">{summary.Compost}</div>
-                    </div>
-                    <div className="sum-item trash">
-                      <div className="icon">🗑</div>
-                      <div className="label">Trash</div>
-                      <div className="value">{summary.Trash}</div>
-                    </div>
-                  </div>
-                </div>
+          <div className="summary">
+            <div className="sum-item recyclable">
+              <div className="icon">♻️</div>
+              <div className="label">Recycle</div>
+              <div className="value">{summary.Recyclable}</div>
+            </div>
+            <div className="sum-item compost">
+              <div className="icon">🍂</div>
+              <div className="label">Compost</div>
+              <div className="value">{summary.Compost}</div>
+            </div>
+            <div className="sum-item trash">
+              <div className="icon">🗑</div>
+              <div className="label">Trash</div>
+              <div className="value">{summary.Trash}</div>
+            </div>
+          </div>
+        </div>
 
         <div className="controls">
           {!isRecording ? (

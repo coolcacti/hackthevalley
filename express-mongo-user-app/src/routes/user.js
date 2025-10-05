@@ -35,18 +35,25 @@ router.post('/sync', checkJwt, async (req, res) => {
 
     if (!sub) return res.status(400).json({ message: 'No sub in token' });
 
-    const user = await User.findOneAndUpdate(
-      { userAuth0Id: sub },
-      {
-        userAuth0Id: sub,
+    const updateDoc = {
+      $set: {
         username: name,
         email,
-        picture,
+        picture
+      },
+      $setOnInsert: {
         compost: 0,
         recycle: 0,
         trash: 0,
-        totalItemsCollected: 0
-      },
+        totalItemsCollected: 0,
+        locations: [],
+        processedVideos: []
+      }
+    };
+
+    const user = await User.findOneAndUpdate(
+      { userAuth0Id: sub },
+      updateDoc,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
@@ -58,6 +65,15 @@ router.post('/sync', checkJwt, async (req, res) => {
 });
 
 router.post("/", createUser);
+
+router.get("/", async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 router.get("/:id", getUser);
 

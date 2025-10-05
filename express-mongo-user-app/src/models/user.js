@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
       {
         latitude: { type: Number },
         longitude: { type: Number },
-        timestamp: { type: Date, default: Date.now }
+        timestamp: { type: Date, default: Date.now },
+        successfulDeposit: { type: Boolean, default: false }
       }
     ], 
     default: []
