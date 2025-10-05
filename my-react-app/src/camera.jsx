@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./camera.css";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 // We'll dynamically import TF so the bundle isn't huge until needed
 // npm install @tensorflow/tfjs @tensorflow-models/coco-ssd
@@ -25,6 +26,8 @@ export default function TrashRecorder() {
   const [lastDetectedObjects, setLastDetectedObjects] = useState([]);
   const [locationStatus, setLocationStatus] = useState("not-requested"); // Track GPS status
 
+  const { user: auth0User } = useAuth0();
+
   const categoryMap = {
     bottle: "Recyclable",
     cup: "Recyclable",
@@ -45,25 +48,25 @@ export default function TrashRecorder() {
 
   const labelToCategory = (label) => {
     const l = label.toLowerCase().trim();
-    
+
     // Exclude people/humans - check this FIRST
     if (l.includes("person") || l.includes("people") || l.includes("human") || l.includes("man") || l.includes("woman") || l.includes("child")) {
       return "person";
     }
-    
+
     // Check exact matches in categoryMap
     if (categoryMap[l]) return categoryMap[l];
-    
+
     // Check recyclables
     if (l.includes("bottle") || l.includes("cup") || l.includes("can") || l.includes("glass")) {
       return "Recyclable";
     }
-    
+
     // Check compost
     if (["banana", "apple", "orange", "sandwich", "hotdog"].some(x => l.includes(x))) {
       return "Compost";
     }
-    
+
     // Default to Trash
     return "Trash";
   };
@@ -77,7 +80,7 @@ export default function TrashRecorder() {
     }
 
     setLocationStatus("requesting");
-    
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         locationRef.current = {
@@ -115,7 +118,7 @@ export default function TrashRecorder() {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setStatus("ready");
-        
+
         // Request location when camera is ready
         requestLocation();
       } catch (err) {
@@ -215,16 +218,14 @@ export default function TrashRecorder() {
     return () => { if (rafId) cancelAnimationFrame(rafId); };
   }, [isDetecting]);
 
-  // Recording
   const startRecording = () => {
     const stream = videoRef.current.srcObject;
     if (!stream) return alert("Camera not initialized.");
-    
-    // Update location right before recording starts
+
     if (locationStatus === "acquired") {
       requestLocation(); // Refresh location
     }
-    
+
     chunksRef.current = [];
     recorderRef.current = new MediaRecorder(stream, { mimeType: "video/webm; codecs=vp9" });
 
@@ -253,27 +254,31 @@ export default function TrashRecorder() {
     setIsDetecting(false);
     setStatus("ready");
   };
-
-  // Integrated sendRecording function with location data
   const sendRecording = async () => {
-    if (!recorderRef.current || !recorderRef.current.recordedBlob) return alert("No recording available.");
+    if (!recorderRef.current || !recorderRef.current.recordedBlob)
+      return alert("No recording available.");
 
     const form = new FormData();
     form.append("video", recorderRef.current.recordedBlob, "recording.webm");
-    
-    // Prepare data to send
+
     const dataToSend = {
       summary,
       lastDetectedObjects,
-      location: locationRef.current || null // Include location coordinates
+      location: locationRef.current || null,
+      // Provide the Auth0 id. try auth0User.sub first, fall back to `user.userAuth0Id`
+      userAuth0Id: auth0User?.sub || user?.userAuth0Id || null
     };
-    
+
     form.append("data", JSON.stringify(dataToSend));
 
     try {
       setStatus("sending");
-      const res = await fetch("http://localhost:5001/api/upload", { method: "POST", body: form });
+      const res = await fetch("http://localhost:5001/api/upload", {
+        method: "POST",
+        body: form,
+      });
       if (!res.ok) throw new Error("Upload failed");
+
       const data = await res.json();
       console.log("Server response:", data);
       alert("Video sent successfully!");
@@ -320,7 +325,7 @@ export default function TrashRecorder() {
         <div className="camera-area">
           <video ref={videoRef} className="camera-video" playsInline muted />
           <canvas ref={canvasRef} className="camera-canvas" />
-          
+
           {/* Location indicator */}
           <div style={{
             position: "absolute",
@@ -337,24 +342,24 @@ export default function TrashRecorder() {
         </div>
 
         <div className="info-panel">
-  <div className="summary">
-    <div className="sum-item recyclable">
-      <div className="icon">♻️</div>
-      <div className="label">Recycle</div>
-      <div className="value">{summary.Recyclable}</div>
-    </div>
-    <div className="sum-item compost">
-      <div className="icon">🍂</div>
-      <div className="label">Compost</div>
-      <div className="value">{summary.Compost}</div>
-    </div>
-    <div className="sum-item trash">
-      <div className="icon">🗑</div>
-      <div className="label">Trash</div>
-      <div className="value">{summary.Trash}</div>
-    </div>
-  </div>
-</div>
+          <div className="summary">
+            <div className="sum-item recyclable">
+              <div className="icon">♻️</div>
+              <div className="label">Recycle</div>
+              <div className="value">{summary.Recyclable}</div>
+            </div>
+            <div className="sum-item compost">
+              <div className="icon">🍂</div>
+              <div className="label">Compost</div>
+              <div className="value">{summary.Compost}</div>
+            </div>
+            <div className="sum-item trash">
+              <div className="icon">🗑</div>
+              <div className="label">Trash</div>
+              <div className="value">{summary.Trash}</div>
+            </div>
+          </div>
+        </div>
 
 
         <div className="controls">

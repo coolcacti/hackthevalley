@@ -9,6 +9,16 @@ const userSchema = new mongoose.Schema({
   recycle: { type: Number, default: 0 },
   trash: { type: Number, default: 0 },
   totalItemsCollected: { type: Number, default: 0 },
+  locations: { 
+    type: [
+      {
+        latitude: { type: Number },
+        longitude: { type: Number },
+        timestamp: { type: Date, default: Date.now }
+      }
+    ], 
+    default: []
+  },
 });
 
 const User = mongoose.model('User', userSchema);

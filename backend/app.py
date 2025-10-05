@@ -8,6 +8,106 @@ from werkzeug.utils import secure_filename
 import google.genai as genai
 from google.genai import types
 from pathlib import Path
+from pymongo import MongoClient
+from dotenv import load_dotenv
+from datetime import datetime, timezone
+
+load_dotenv()
+
+MONGO_URI = os.environ.get("MONGO_URI")
+client_db = MongoClient(MONGO_URI)
+db = client_db['hackthevalley']
+users_collection = db['users']
+
+from datetime import datetime, timezone
+
+from datetime import datetime, timezone
+
+def update_user_scores(userAuth0Id, gemini_result=None, metadata=None, video_filename=None):
+    try:
+        compost = recycle = trash = 0
+
+        objects = []
+        if gemini_result and isinstance(gemini_result, dict):
+            objects = gemini_result.get("objects", []) or []
+
+        if objects:
+            for obj in objects:
+                thrown = str(obj.get("thrown_in_bin", "")).lower()
+                ttype = str(obj.get("trash_type", "")).lower()
+
+                if thrown != "yes":
+                    continue
+
+                if "compost" in ttype or "organic" in ttype or "food" in ttype:
+                    compost += 1
+                elif "recycl" in ttype or "plastic" in ttype or "bottle" in ttype or "can" in ttype or "paper" in ttype or "cardboard" in ttype:
+                    recycle += 1
+                else:
+                    trash += 1
+        else:
+            if metadata and isinstance(metadata, dict):
+                summary = metadata.get("summary", {}) or {}
+                try:
+                    recycle = int(summary.get("Recyclable", 0))
+                except Exception:
+                    recycle = 0
+                try:
+                    compost = int(summary.get("Compost", 0))
+                except Exception:
+                    compost = 0
+                try:
+                    trash = int(summary.get("Trash", 0))
+                except Exception:
+                    trash = 0
+
+        total = compost + recycle + trash
+        if total == 0 and not (metadata and metadata.get("location")):
+            print("update_user_scores: nothing to increment and no location; still will mark processed video if filename provided.")
+
+        update_doc = {}
+        inc_doc = {}
+        if compost: inc_doc["compost"] = compost
+        if recycle: inc_doc["recycle"] = recycle
+        if trash: inc_doc["trash"] = trash
+        if total: inc_doc["totalItemsCollected"] = total
+
+        if inc_doc:
+            update_doc["$inc"] = inc_doc
+
+        if metadata and isinstance(metadata, dict):
+            loc = metadata.get("location")
+            if loc and isinstance(loc, dict):
+                update_doc.setdefault("$push", {})
+                update_doc["$push"]["locations"] = {
+                    "latitude": loc.get("latitude"),
+                    "longitude": loc.get("longitude"),
+                    "timestamp": datetime.now(timezone.utc)
+                }
+
+        if video_filename:
+            update_doc.setdefault("$addToSet", {})
+            update_doc["$addToSet"]["processedVideos"] = video_filename
+
+        if not update_doc:
+            print("update_user_scores: no update required (no counts, no location, no filename).")
+            return {"matched_count": 0, "modified_count": 0}
+
+        filter_doc = {"userAuth0Id": userAuth0Id}
+        if video_filename:
+            filter_doc["processedVideos"] = {"$ne": video_filename}
+
+        result = users_collection.update_one(filter_doc, update_doc)
+
+        print(f"update_user_scores: filter={filter_doc} applying update={update_doc}")
+        print(f"update_user_scores: matched={result.matched_count} modified={result.modified_count}")
+
+        return {"matched_count": result.matched_count, "modified_count": result.modified_count}
+
+    except Exception as e:
+        print(f"Error in update_user_scores: {e}")
+        import traceback; traceback.print_exc()
+        return {"matched_count": 0, "modified_count": 0}
 
 app = Flask(__name__)
 CORS(app)
@@ -165,61 +265,78 @@ def save_analysis_result(filename, gemini_result, metadata):
     print(f"Analysis result saved to: {result_path}")
     return result_path
 
-
 @app.route('/api/upload', methods=['POST'])
 def upload_video():
     """
-    Handle video upload and analysis with location data
+    Handle incoming video upload, analyze with Gemini, optionally update user scores,
+    save result JSON, and ALWAYS return a valid Flask response (JSON + status).
     """
     try:
-        # Check if video file is present
+        # Validate file
         if 'video' not in request.files:
             return jsonify({'error': 'No video file provided'}), 400
-        
+
         video = request.files['video']
-        
         if video.filename == '':
             return jsonify({'error': 'No file selected'}), 400
-        
+
         if not allowed_file(video.filename):
             return jsonify({'error': 'Invalid file type'}), 400
-        
-        # Save the video file
+
+        # Save uploaded file
         filename = secure_filename(video.filename)
         timestamp = int(time.time())
         filename = f"{timestamp}_{filename}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         video.save(filepath)
-        
         print(f"Video saved to: {filepath}")
-        
-        # Get data from frontend (includes summary, objects, and location)
+
+        # Parse incoming JSON metadata (once)
         metadata = {}
         data_str = request.form.get('data')
+        parsed_data = {}
         if data_str:
-            data = json.loads(data_str)
+            try:
+                parsed_data = json.loads(data_str)
+            except Exception as e:
+                print("Warning: failed to parse request.form['data'] as JSON:", e)
+                parsed_data = {}
+
             metadata = {
-                'summary': data.get('summary', {}),
-                'detected_objects': data.get('lastDetectedObjects', []),
-                'location': data.get('location')  # GPS coordinates
+                'summary': parsed_data.get('summary', {}),
+                'detected_objects': parsed_data.get('lastDetectedObjects', []),
+                'location': parsed_data.get('location')
             }
-            print(f"Frontend data received:")
+            print("Frontend data received:")
             print(f"  - Summary: {metadata['summary']}")
             print(f"  - Objects: {metadata['detected_objects']}")
             print(f"  - Location: {metadata['location']}")
-        
-        # Analyze video with Gemini
+
+        # Call Gemini analyzer
         gemini_result = analyze_video_with_gemini(filepath)
-        
-        # Add location to gemini_result
+        if not isinstance(gemini_result, dict):
+            gemini_result = {'error': 'invalid_gemini_response', 'raw': str(gemini_result)}
+
+        # Attach frontend location to gemini_result so it's saved with the result file
         if metadata.get('location'):
             gemini_result['location'] = metadata['location']
             print(f"Location added to Gemini result: {metadata['location']}")
-        
-        # Save complete analysis result to file
+
+        user_auth0_id = parsed_data.get("userAuth0Id") if parsed_data else None
+
+        if user_auth0_id:
+            try:
+                res = update_user_scores(user_auth0_id, gemini_result=gemini_result, metadata=metadata, video_filename=filename)
+                print(f"Updated user scores for {user_auth0_id}, matched={res.get('matched_count')} modified={res.get('modified_count')}")
+            except Exception as e:
+                print(f"Failed updating user scores for {user_auth0_id}: {e}")
+        else:
+            print("No userAuth0Id provided in request — skipping user score update.")
+
+        # Save the analysis result to disk
         result_path = save_analysis_result(filename, gemini_result, metadata)
-        
-        # Return combined response
+
+        # Build and return success response
         response = {
             'success': True,
             'filename': filename,
@@ -228,15 +345,13 @@ def upload_video():
             'location': metadata.get('location'),
             'message': 'Video uploaded and analyzed successfully'
         }
-        
         return jsonify(response), 200
-        
+
     except Exception as e:
-        print(f"Upload error: {str(e)}")
+        # Log full traceback and return a 500 JSON response
         import traceback
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
-
+        return jsonify({'error': 'internal_server_error', 'details': str(e)}), 500
 
 @app.route('/api/analyze-existing', methods=['POST'])
 def analyze_existing_video():
