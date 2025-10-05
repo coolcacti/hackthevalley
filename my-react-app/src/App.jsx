@@ -42,7 +42,7 @@ function App() {
         console.error("Failed to fetch users:", err);
       }
     }
-    
+
     fetchUsers();
 
     const handleUserSynced = (e) => {

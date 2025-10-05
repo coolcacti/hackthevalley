@@ -25,6 +25,7 @@ export default function TrashRecorder() {
   const [summary, setSummary] = useState({ Recyclable: 0, Compost: 0, Trash: 0 });
   const [lastDetectedObjects, setLastDetectedObjects] = useState([]);
   const [locationStatus, setLocationStatus] = useState("not-requested"); // Track GPS status
+  const [dbSummary, setDbSummary] = useState({ Recyclable: 0, Compost: 0, Trash: 0 });
 
   const { user: auth0User } = useAuth0();
 
@@ -283,11 +284,25 @@ export default function TrashRecorder() {
       });
       if (!res.ok) throw new Error("Upload failed");
 
-      const data = await res.json();
-      console.log("Server response:", data);
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Server response:", data);
 
-      // Show success screen instead of alert
-      setStatus("sent-success");
+        // Fetch updated user data from backend
+        if (auth0User?.sub) {
+          const userRes = await fetch(`http://localhost:5000/api/users`);
+          const users = await userRes.json();
+          const dbUser = users.find(u => u.userAuth0Id === auth0User.sub);
+          if (dbUser) {
+            setDbSummary({
+              Recyclable: dbUser.recycle ?? 0,
+              Compost: dbUser.compost ?? 0,
+              Trash: dbUser.trash ?? 0
+            });
+          }
+        }
+        setStatus("sent-success");
+      }
     } catch (err) {
       console.error(err);
       setStatus("send-error");
@@ -320,47 +335,45 @@ export default function TrashRecorder() {
   }
 
   // Show success screen with summary
+  // Replace the existing "sent-success" rendering with this:
   if (status === "sent-success") {
     return (
       <div className='success-text'>
-        <div style={{ fontSize: "24px", marginBottom: "20px", fontWeight: "bold" }}>✅ Successfully Sent!</div>
-        <div style={{ fontSize: "18px", marginBottom: "30px" }}>Here's what you picked up:</div>
-        <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-around", width: "100%" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "40px" }}>♻️</div>
-            <div style={{ fontSize: "14px", color: "#4e8f41" }}>Recyclable</div>
-            <div style={{ fontSize: "24px", fontWeight: "bold" }}>{summary.Recyclable}</div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "40px" }}>🍂</div>
-            <div style={{ fontSize: "14px", color: "#c07b2b" }}>Compost</div>
-            <div style={{ fontSize: "24px", fontWeight: "bold" }}>{summary.Compost}</div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "40px" }}>🗑</div>
-            <div style={{ fontSize: "14px", color: "#9b2f2f" }}>Trash</div>
-            <div style={{ fontSize: "24px", fontWeight: "bold" }}>{summary.Trash}</div>
-          </div>
+        <div style={{ fontSize: 24, marginBottom: 12, fontWeight: "bold" }}>
+          ✅ Successfully Sent!
         </div>
 
-        <button
-          onClick={goBack}
-          style={{
-            marginTop: "20px",
-            padding: "12px 30px",
-            background: "#4e8f41",
-            color: "white",
-            border: "none",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontSize: "16px"
-          }}
-        >
-          Back Home
-        </button>
+        {/* <div style={{ fontSize: 18, marginBottom: 18 }}>Session results (local detection):</div>
+        <div style={{ display: "flex", justifyContent: "space-around", width: "100%", marginBottom: 18 }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 32 }}>♻️</div>
+            <div style={{ fontSize: 12, color: "#4e8f41" }}>Recyclable</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>{summary.Recyclable}</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 32 }}>🍂</div>
+            <div style={{ fontSize: 12, color: "#c07b2b" }}>Compost</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>{summary.Compost}</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 32 }}>🗑</div>
+            <div style={{ fontSize: 12, color: "#9b2f2f" }}>Trash</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>{summary.Trash}</div>
+          </div>
+        </div> */}
+
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button onClick={goBack} style={{
+            marginTop: 20, padding: "12px 30px", background: "#4e8f41",
+            color: "white", border: "none", borderRadius: 10, cursor: "pointer", fontSize: 16
+          }}>
+            Back Home
+          </button>
+        </div>
       </div>
     );
   }
+
 
   // Show error screen with retry option
   if (status === "send-error") {
