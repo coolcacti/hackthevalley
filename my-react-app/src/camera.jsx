@@ -305,7 +305,7 @@ export default function TrashRecorder() {
       <div className="phone-frame">
         <div className="top-bar">
           <button className="btn back" onClick={goBack}>&#60;</button>
-          <div className="app-heading">Dump it Like its Hot</div>
+          <div className="app-heading">Scan for Trash</div>
           <div style={{ position: "relative" }}>
             {dropdownOpen && (
               <div className="avatar-menu">

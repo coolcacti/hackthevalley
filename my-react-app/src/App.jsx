@@ -20,12 +20,12 @@ function App() {
 
   // Mock leaderboard data
   const leaderboardUsers = [
-    { name: "Luna Green", img: "/avatar1.jpeg", score: 240 },
-    { name: "EcoHero99", img: "/avatar2.jpeg", score: 220 },
-    { name: "ForestFan", img: "/avatar3.jpeg", score: 200 },
-    { name: "RecycleQueen", img: "/avatar2.jpeg", score: 180 },
-    { name: "NatureNinja", img: "/avatar1.jpeg", score: 160 },
-    { name: "PlanetPal", img: "/avatar2.jpeg", score: 150 },
+    { name: "Luna Green", img: "/avatar.png", score: 240 },
+    { name: "EcoHero99", img: "/avatar.png", score: 220 },
+    { name: "ForestFan", img: "/avatar.png", score: 200 },
+    { name: "RecycleQueen", img: "/avatar.png", score: 180 },
+    { name: "NatureNinja", img: "/avatar.png", score: 160 },
+    { name: "PlanetPal", img: "/avatar.png", score: 150 },
   ];
 
   return (

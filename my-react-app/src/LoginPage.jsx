@@ -17,7 +17,8 @@ export default function LoginPage() {
       {!isAuthenticated ? (
         <div className="login-container">
           <h1 className="welcome-text">Welcome to</h1>
-          <h1 className="welcome-text">EcoScav! 🌍</h1>
+          <h1 className="welcome-text">Dump it</h1>
+          <h1 className="welcome-text">Like its Hot!</h1>
           <button className="login-button" onClick={handleLogin}>Log In</button>
         </div>
       ) : (

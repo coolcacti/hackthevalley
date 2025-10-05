@@ -92,7 +92,8 @@ body {
   font-weight: bold;
   border-radius: 25px;
   cursor: pointer;
-  margin: 45px 20px;
+  margin: 35px 20px;
+  margin-bottom: 20px;
   width: 90%;
   display: block;
   margin-left: auto;
