@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./camera.css";
+import { useNavigate } from "react-router-dom";
+
 
 // We'll dynamically import TF so the bundle isn't huge until needed
 // npm install @tensorflow/tfjs @tensorflow-models/coco-ssd
 
 export default function TrashRecorder() {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const recorderRef = useRef(null);
@@ -229,19 +232,18 @@ export default function TrashRecorder() {
     }
   };
 
+  const goBack = () => {
+    navigate('/app');
+  };
+
+
   return (
     <div className="app-phone-root">
       <div className="phone-frame">
         <div className="top-bar">
-          <button className="btn back" onClick={() => alert("Back")}>←</button>
-          <div className="app-heading">AI Voice Notes</div>
+          <button className="btn back" onClick={goBack}>&#60;</button>
+          <div className="app-heading">Dump it Like it's Hot</div>
           <div style={{ position: "relative" }}>
-            <img
-              src={user.avatar}
-              className="avatar-thumb"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              alt="Avatar"
-            />
             {dropdownOpen && (
               <div className="avatar-menu">
                 <div>Hello, {user.name}</div>
@@ -258,10 +260,20 @@ export default function TrashRecorder() {
         </div>
 
         <div className="info-panel">
-          <div className="summary">
-            <div className="sum-item recyclable">♻️ Recyclable: {summary.Recyclable}</div>
-            <div className="sum-item compost">🍂 Compost: {summary.Compost}</div>
-            <div className="sum-item trash">🗑 Trash: {summary.Trash}</div>
+          <div className="sum-item recyclable">
+            <div style={{ fontSize: '32px' }}>♻️</div>
+            <div style={{ fontSize: '11px', fontWeight: '600' }}>Recycle</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{summary.Recyclable}</div>
+          </div>
+          <div className="sum-item compost">
+            <div style={{ fontSize: '32px' }}>🍂</div>
+            <div style={{ fontSize: '11px', fontWeight: '600' }}>Compost</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{summary.Compost}</div>
+          </div>
+          <div className="sum-item trash">
+            <div style={{ fontSize: '32px' }}>🗑️</div>
+            <div style={{ fontSize: '11px', fontWeight: '600' }}>Trash</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{summary.Trash}</div>
           </div>
         </div>
 
