@@ -1,13 +1,13 @@
-// SyncUser.jsx
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 function SyncUser() {
   const { user, getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const didSync = useRef(false);
 
   useEffect(() => {
     const syncUser = async () => {
-      if (!isAuthenticated || !user) return;
+      if (!isAuthenticated || !user || didSync.current) return;
       try {
         const token = await getAccessTokenSilently({
           audience: "https://dev-kipzv7bwrxcpd61d.us.auth0.com/api/v2/",
@@ -31,14 +31,13 @@ function SyncUser() {
         console.log("sync body:", body);
 
         if (resp.ok) {
+          didSync.current = true;
           window.dispatchEvent(new CustomEvent("userSynced", { detail: body }));
         }
-
       } catch (err) {
         console.error("User sync failed:", err);
       }
     };
-
     syncUser();
   }, [isAuthenticated, user, getAccessTokenSilently]);
 

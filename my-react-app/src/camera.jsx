@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import "./camera.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
-const { user } = useAuth0()
 
 // We'll dynamically import TF so the bundle isn't huge until needed
 // npm install @tensorflow/tfjs @tensorflow-models/coco-ssd
@@ -269,7 +268,7 @@ export default function TrashRecorder() {
     form.append("video", recorderRef.current.recordedBlob, "recording.webm");
 
     const dataToSend = {
-      userAuth0Id: user?.sub,
+      userAuth0Id: auth0User?.sub,
       summary,
       lastDetectedObjects,
       location: locationRef.current || null,
