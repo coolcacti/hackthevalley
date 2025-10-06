@@ -23,8 +23,28 @@ export const getUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const { compost, recycle, trash, totalItemsCollected } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, { compost, recycle, trash, totalItemsCollected }, { new: true });
+    const { compost, recycle, trash, totalItemsCollected, location } = req.body;
+    let updateFields = { compost, recycle, trash, totalItemsCollected };
+
+    if (location && typeof location === 'object') {
+      updateFields = {
+        ...updateFields,
+        $push: {
+          locations: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            timestamp: new Date(),
+            successfulDeposit: !!location.successfulDeposit
+          }
+        }
+      };
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true }
+    );
     if (!updatedUser) return res.status(404).json({ message: 'User not found' });
     res.json(updatedUser);
   } catch (error) {
